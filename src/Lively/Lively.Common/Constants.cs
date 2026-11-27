@@ -70,7 +70,7 @@ namespace Lively.Common
 
         public static class SingleInstance
         {
-            // Vibe Loop: must differ from upstream Lively ("LIVELY:DESKTOPWALLPAPERSYSTEM") so both apps can run side by side.
+            // Vibe Loop: must differ from upstream Lively (LIVELY:DESKTOPWALLPAPERSYSTEM) so both apps can run side by side.
             // Also used as: gRPC/legacy pipe name prefix, DPAPI entropy for Tokens.dat, installer AppMutex, screensaver launcher.
             // Keep in sync with Lively.Utility.Screensaver/Program.cs and src/installer/Script*.iss (AppMutex).
             public static string UniqueAppName { get; } = "VIBELOOP:DESKTOPWALLPAPERSYSTEM";
