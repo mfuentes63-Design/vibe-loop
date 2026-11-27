@@ -53,7 +53,7 @@ namespace Lively.UI.Shared.ViewModels
             // Latest version has built-in screensaver idle check, do not prompt user.
             IsScreensaverPluginNotify = false;
             //IsScreensaverPluginNotify = !PackageUtil.IsRunningAsPackaged &&
-            //    !ScreensaverUtil.IsScreensaverSelected("Lively") &&
+            //    !ScreensaverUtil.IsScreensaverSelected("VibeLoop") &&
             //    userSettings.Settings.IsScreensaverPluginNotify;
 
             UpdateLayout();
