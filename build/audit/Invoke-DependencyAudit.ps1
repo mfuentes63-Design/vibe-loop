@@ -145,17 +145,16 @@ if ($failed) { $resultText = 'FAIL' }
 $bySeverity = [ordered]@{}
 foreach ($s in 'critical', 'high', 'moderate', 'low') { $bySeverity[$s] = @($adv | Where-Object severity -eq $s).Count }
 
-$report = [ordered]@{
-    generatedUtc     = (Get-Date).ToUniversalTime().ToString('o')
-    policy           = "fail on severity >= $FailOnSeverity and on NU1605 downgrades; nothing suppressed"
-    result           = $resultText
-    advisoryCounts   = $bySeverity
-    advisories       = $adv
-    downgrades       = $down
-    outOfRange       = $range
-    dotnetListProjects = @($listedProjects)
-    toolErrors       = @($toolErrors)
-}
+$report = [ordered]@{}
+$report['generatedUtc'] = (Get-Date).ToUniversalTime().ToString('o')
+$report['policy'] = "fail on severity >= $FailOnSeverity and on NU1605 downgrades; nothing suppressed"
+$report['result'] = $resultText
+$report['advisoryCounts'] = $bySeverity
+$report['advisories'] = $adv
+$report['downgrades'] = $down
+$report['outOfRange'] = $range
+$report['dotnetListProjects'] = $listedProjects.ToArray()
+$report['toolErrors'] = $toolErrors.ToArray()
 $report | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 (Join-Path $OutDir 'dependency-audit.json')
 
 $md = New-Object System.Text.StringBuilder
