@@ -40,11 +40,9 @@ function Get-FolderState([string] $path) {
     if (-not (Test-Path -LiteralPath $path)) { return [ordered]@{ path = $path; exists = $false } }
     $files = @(Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue)
     $newest = $files | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
-    return [ordered]@{
-        path = $path; exists = $true; fileCount = $files.Count
-        newestWriteUtc = if ($newest) { $newest.LastWriteTimeUtc.ToString('o') } else { $null }
-        newestFile = if ($newest) { $newest.FullName.Substring($path.Length).TrimStart('\') } else { $null }
-    }
+    $newestUtc = $null; $newestFile = $null
+    if ($newest) { $newestUtc = $newest.LastWriteTimeUtc.ToString('o'); $newestFile = $newest.FullName.Substring($path.Length).TrimStart('\') }
+    return [ordered]@{ path = $path; exists = $true; fileCount = $files.Count; newestWriteUtc = $newestUtc; newestFile = $newestFile }
 }
 
 function Test-MutexExists([string] $name) {
@@ -123,10 +121,14 @@ foreach ($k in $ids.Keys) {
     $state.uninstall[$k] = $found
 }
 
-$state.processes = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $procNames -contains $_.ProcessName } | ForEach-Object {
-        $path = $null; try { $path = $_.Path } catch { }
-        [ordered]@{ name = $_.ProcessName; id = $_.Id; path = $path; started = $(try { $_.StartTime.ToUniversalTime().ToString('o') } catch { $null }) }
-    })
+$procList = @()
+foreach ($p in @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $procNames -contains $_.ProcessName })) {
+    $path = $null; $started = $null
+    try { $path = $p.Path } catch { }
+    try { $started = $p.StartTime.ToUniversalTime().ToString('o') } catch { }
+    $procList += [ordered]@{ name = $p.ProcessName; id = $p.Id; path = $path; started = $started }
+}
+$state.processes = $procList
 try {
     $state.pipes = @([IO.Directory]::GetFiles('\\.\pipe\') | ForEach-Object { $_.Substring(9) } | Where-Object { $_ -match 'VIBELOOP|LIVELY|mpvsocket' })
 } catch { $state.pipes = @("<error> $($_.Exception.Message)") }

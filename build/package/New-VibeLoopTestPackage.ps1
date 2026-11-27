@@ -344,13 +344,19 @@ if ($problems.Count) { $problems | ForEach-Object { Write-Host "::error title=Te
 # ------------------------------------------------------------------ 7. info, manifest, zip
 function Get-FileVer([string] $rel) { $p = Join-Path $root $rel; if (Test-Path $p) { (Get-Item $p).VersionInfo.FileVersion } else { $null } }
 $files = Get-ChildItem $root -Recurse -File
+$workflowRun = $null
+if ($env:GITHUB_RUN_ID) { $workflowRun = "$($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY)/actions/runs/$($env:GITHUB_RUN_ID)" }
+$magickNative = $null
+$magickDll = Get-ChildItem $app -Recurse -Filter 'Magick.Native-Q8-x64.dll' | Select-Object -First 1
+if ($magickDll) { $magickNative = $magickDll.VersionInfo.FileVersion }
+$totalBytes = ($files | Measure-Object Length -Sum).Sum
 $info = [ordered]@{
     name            = 'Vibe Loop Windows x64 test package'
     status          = 'TEST ONLY - NOT RUNTIME-VERIFIED. Compiled and assembled by CI; not yet started or exercised on Windows.'
     runtimeVerified = $false
     commit          = $commit
     ref             = $env:GITHUB_REF_NAME
-    workflowRun     = if ($env:GITHUB_RUN_ID) { "$($env:GITHUB_SERVER_URL)/$($env:GITHUB_REPOSITORY)/actions/runs/$($env:GITHUB_RUN_ID)" } else { $null }
+    workflowRun     = $workflowRun
     builtUtc        = (Get-Date).ToUniversalTime().ToString('o')
     runner          = $env:ImageOS + ' ' + $env:ImageVersion
     configuration   = "$Configuration|x64; core and UI self-contained win-x64; .NET Framework 4.7.2 components from the solution build"
@@ -361,12 +367,12 @@ $info = [ordered]@{
         cefPlayer   = Get-FileVer 'app/plugins/cef/Lively.Player.CefSharp.exe'
         libcef      = Get-FileVer 'app/plugins/cef/libcef.dll'
         webview2    = Get-FileVer 'app/plugins/webview2/Lively.Player.WebView2.exe'
-        magickNative = (Get-ChildItem $app -Recurse -Filter 'Magick.Native-Q8-x64.dll' | Select-Object -First 1 | ForEach-Object { $_.VersionInfo.FileVersion })
+        magickNative = $magickNative
     }
     thirdParty      = $thirdParty
     msvcRuntime     = $crtFiles
     fileCount       = $files.Count
-    totalBytes      = ($files | Measure-Object Length -Sum).Sum
+    totalBytes      = $totalBytes
     safety          = @(
         'Portable: run app\VibeLoop.exe from an unzipped folder; nothing is installed.',
         'No Inno installer, uninstaller, VC++/.NET redistributable installers or MSIX are included.',

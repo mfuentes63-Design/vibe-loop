@@ -31,7 +31,7 @@ param(
 $ErrorActionPreference = 'Stop'
 trap {
     $pos = if ($_.InvocationInfo) { $_.InvocationInfo.PositionMessage } else { '' }
-    Write-Host "::error title=Dependency audit script failed::$($_.Exception.Message) $($pos -replace '\r?\n', ' ')"
+    Write-Host "::error title=Dependency audit script failed (audit result unknown)::$($_.Exception.Message) $($pos -replace '\r?\n', ' ')"
     Write-Host $_.ScriptStackTrace
     exit 1
 }
@@ -140,13 +140,15 @@ $down = @($downgrades.Values | ForEach-Object { [pscustomobject]$_ })
 $range = @($outOfRange.Values | ForEach-Object { [pscustomobject]$_ })
 $failed = ($blocking.Count -gt 0) -or ($down.Count -gt 0)
 
+$resultText = 'PASS'
+if ($failed) { $resultText = 'FAIL' }
 $bySeverity = [ordered]@{}
 foreach ($s in 'critical', 'high', 'moderate', 'low') { $bySeverity[$s] = @($adv | Where-Object severity -eq $s).Count }
 
 $report = [ordered]@{
     generatedUtc     = (Get-Date).ToUniversalTime().ToString('o')
     policy           = "fail on severity >= $FailOnSeverity and on NU1605 downgrades; nothing suppressed"
-    result           = $(if ($failed) { 'FAIL' } else { 'PASS' })
+    result           = $resultText
     advisoryCounts   = $bySeverity
     advisories       = $adv
     downgrades       = $down
