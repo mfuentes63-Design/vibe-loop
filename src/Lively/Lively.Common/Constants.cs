@@ -90,6 +90,25 @@ namespace Lively.Common
             public static bool IsTestBuild { get; } = false;
         }
 
+        /// <summary>
+        /// Vibe Loop: switches for upstream-owned online services.
+        /// Both services are operated by the Lively Wallpaper project (GitHub releases of rocksdanister/lively and
+        /// api.livelywallpaper.net with upstream OAuth client IDs) and are therefore disabled in this fork.
+        /// </summary>
+        public static class Features
+        {
+            /// <summary>
+            /// Periodic/automatic update check. When enabled, checks the fork's GitHub releases (see GithubUpdaterService),
+            /// never the upstream Lively installer.
+            /// </summary>
+            public static bool IsAppUpdateCheckEnabled { get; } = false;
+
+            /// <summary>
+            /// Lively online gallery (browse, login, subscribe, share/upload, restore).
+            /// </summary>
+            public static bool IsGalleryEnabled { get; } = false;
+        }
+
         public static class Weather
         {
             //todo: make compile-time flag.

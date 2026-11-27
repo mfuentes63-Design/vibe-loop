@@ -115,8 +115,8 @@ namespace Lively.Services
             notifyIcon.ContextMenuStrip.Items.Add(customiseWallpaperMenu);
             trayMenuItems[TrayMenuItem.customiseWallpaper] = customiseWallpaperMenu;
 
-            // Update check, only create on installer build.
-            if (!PackageUtil.IsRunningAsPackaged)
+            // Update check, only create on installer build (and when the fork's update check is enabled).
+            if (!PackageUtil.IsRunningAsPackaged && Constants.Features.IsAppUpdateCheckEnabled)
             {
                 var updateTrayMenu = new ToolStripMenuItem(GetMenuItemString(TrayMenuItem.updateApp), null)
                 {
