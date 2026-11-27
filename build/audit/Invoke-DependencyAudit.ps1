@@ -9,9 +9,12 @@
     2. `dotnet list <project> package --vulnerable --include-transitive --format json` for every
        SDK-style project (the shared .shproj and legacy projects are skipped - covered by source 1).
 
-  Policy (nothing is suppressed):
-    - FAIL  : any advisory at or above -FailOnSeverity (default: high), any NU1605 downgrade.
-    - WARN  : advisories below the threshold, NU1608, tool errors.
+  Policy (nothing is suppressed; the audit fails CLOSED when it cannot see everything):
+    - FAIL  : any advisory at or above -FailOnSeverity (default: high), any NU1605 downgrade,
+              any `dotnet list` tool error or an SDK-style project that was not audited (unless -AllowToolErrors),
+              a restore log that contains no restore output.
+    - WARN  : advisories below the threshold, NU1608.
+  "PASS" is policy-specific: it means no finding at or above the threshold, NOT "no vulnerabilities".
 
 .PARAMETER RestoreLog
   MSBuild text log that contains the restore output (e.g. artifacts/logs/build.log).
@@ -25,7 +28,8 @@ param(
     [string] $SourceRoot = (Join-Path $PSScriptRoot '../../src/Lively'),
     [string] $OutDir = 'artifacts/audit',
     [ValidateSet('low', 'moderate', 'high', 'critical')] [string] $FailOnSeverity = 'high',
-    [switch] $SkipDotnetList
+    [switch] $SkipDotnetList,
+    [switch] $AllowToolErrors
 )
 
 $ErrorActionPreference = 'Stop'
@@ -53,6 +57,8 @@ $downRegex = [regex] '(?<proj>[^\s:]+\.csproj)\s*:\s*(?:warning|error) NU1605: D
 $rangeRegex = [regex] '(?<proj>[^\s:]+\.csproj)\s*:\s*warning NU1608: (?<msg>.+?)(?:\s+\[|$)'
 
 $logLines = [IO.File]::ReadAllLines((Resolve-Path $RestoreLog).Path)
+$restoreSeen = $false
+foreach ($l in $logLines) { if ($l -match 'Determining projects to restore|Restored .+\.csproj|All projects are up-to-date for restore') { $restoreSeen = $true; break } }
 for ($i = 0; $i -lt $logLines.Length; $i++) {
     $line = [string]$logLines[$i]
     $ma = $advRegex.Match($line)
@@ -84,10 +90,13 @@ for ($i = 0; $i -lt $logLines.Length; $i++) {
 # ---------------------------------------------------------------- 2. dotnet list (SDK-style projects)
 $toolErrors = New-Object System.Collections.Generic.List[object]
 $listedProjects = New-Object System.Collections.Generic.List[string]
+$sdkProjectCount = 0
 if (-not $SkipDotnetList) {
     $projects = Get-ChildItem -Path $SourceRoot -Recurse -Filter *.csproj | Where-Object {
         $_.FullName -notmatch '[\\/](bin|obj)[\\/]' -and (Get-Content $_.FullName -TotalCount 3 | Select-String -SimpleMatch '<Project Sdk=' -Quiet)
     }
+    $projects = @($projects)
+    $sdkProjectCount = $projects.Count
     foreach ($p in $projects) {
         $name = $p.BaseName
         $raw = & dotnet list $p.FullName package --vulnerable --include-transitive --format json 2>&1
@@ -138,7 +147,9 @@ $blocking = @($adv | Where-Object { $rank[$_.severity] -ge $threshold })
 $nonBlocking = @($adv | Where-Object { $rank[$_.severity] -lt $threshold })
 $down = @($downgrades.Values | ForEach-Object { [pscustomobject]$_ })
 $range = @($outOfRange.Values | ForEach-Object { [pscustomobject]$_ })
-$failed = ($blocking.Count -gt 0) -or ($down.Count -gt 0)
+$coverageGap = (-not $SkipDotnetList) -and ($listedProjects.Count -lt $sdkProjectCount)
+$toolFailure = (($toolErrors.Count -gt 0) -or $coverageGap) -and (-not $AllowToolErrors)
+$failed = ($blocking.Count -gt 0) -or ($down.Count -gt 0) -or $toolFailure -or (-not $restoreSeen)
 
 $resultText = 'PASS'
 if ($failed) { $resultText = 'FAIL' }
@@ -147,7 +158,9 @@ foreach ($s in 'critical', 'high', 'moderate', 'low') { $bySeverity[$s] = @($adv
 
 $report = [ordered]@{}
 $report['generatedUtc'] = (Get-Date).ToUniversalTime().ToString('o')
-$report['policy'] = "fail on severity >= $FailOnSeverity and on NU1605 downgrades; nothing suppressed"
+$toolNote = ''
+if ($AllowToolErrors) { $toolNote = ' (tool errors allowed by -AllowToolErrors)' }
+$report['policy'] = "fail on severity >= $FailOnSeverity, NU1605 downgrades, audit tool errors / unaudited SDK projects$toolNote and missing restore output; nothing suppressed; PASS is policy-specific, not 'no vulnerabilities'"
 $report['result'] = $resultText
 $report['advisoryCounts'] = $bySeverity
 $report['advisories'] = $adv
@@ -155,6 +168,12 @@ $report['downgrades'] = $down
 $report['outOfRange'] = $range
 $report['dotnetListProjects'] = $listedProjects.ToArray()
 $report['toolErrors'] = $toolErrors.ToArray()
+$report['coverage'] = [ordered]@{}
+$report['coverage']['restoreOutputSeen'] = [bool]$restoreSeen
+$report['coverage']['sdkProjectsFound'] = $sdkProjectCount
+$report['coverage']['sdkProjectsAudited'] = $listedProjects.Count
+$report['coverage']['toolErrors'] = $toolErrors.Count
+$report['coverage']['dotnetListSkipped'] = [bool]$SkipDotnetList
 $report | ConvertTo-Json -Depth 8 | Set-Content -Encoding utf8 (Join-Path $OutDir 'dependency-audit.json')
 
 $md = New-Object System.Text.StringBuilder
@@ -183,7 +202,9 @@ if ($range.Count) {
     foreach ($r in $range) { [void]$md.AppendLine("- $($r.project): $($r.message)") }
     [void]$md.AppendLine('')
 }
-[void]$md.AppendLine("dotnet list checked: $(@($listedProjects).Count) SDK-style projects. Tool errors: $($toolErrors.Count).")
+[void]$md.AppendLine("Coverage: restore output seen = $restoreSeen; dotnet list audited $($listedProjects.Count) of $sdkProjectCount SDK-style projects; tool errors: $($toolErrors.Count).")
+[void]$md.AppendLine('')
+[void]$md.AppendLine('> PASS is policy-specific: no finding at or above the threshold. Advisories below it are listed above and remain open.')
 foreach ($t in $toolErrors) { [void]$md.AppendLine("- $($t.project): $($t.error)") }
 $md.ToString() | Set-Content -Encoding utf8 (Join-Path $OutDir 'dependency-audit.md')
 if ($env:GITHUB_STEP_SUMMARY) { $md.ToString() | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY }
@@ -195,8 +216,10 @@ foreach ($d in $down) { if ($inGha) { Write-Host "::error title=Package downgrad
 $nonBlocking | Group-Object package, version | ForEach-Object {
     if ($inGha) { Write-Host "::warning title=Dependency advisories below threshold::$($_.Name): $($_.Count) advisory(ies) ($((($_.Group.severity) | Sort-Object -Unique) -join ', '))" }
 }
-foreach ($t in $toolErrors) { if ($inGha) { Write-Host "::warning title=dotnet list failed::$($t.project): $($t.error)" } }
+foreach ($t in $toolErrors) { if ($inGha) { Write-Host "::error title=dotnet list failed (audit fails closed)::$($t.project): $($t.error)" } }
+if ($coverageGap -and $inGha) { Write-Host "::error title=Audit coverage gap::dotnet list audited $($listedProjects.Count) of $sdkProjectCount SDK-style projects" }
+if (-not $restoreSeen -and $inGha) { Write-Host "::error title=Audit input invalid::$RestoreLog contains no NuGet restore output" }
 
-Write-Host ("Dependency audit {0}: critical={1} high={2} moderate={3} low={4} downgrades={5}" -f $report.result, $bySeverity.critical, $bySeverity.high, $bySeverity.moderate, $bySeverity.low, $down.Count)
+Write-Host ("Dependency audit {0}: critical={1} high={2} moderate={3} low={4} downgrades={5} toolErrors={6} sdkProjectsAudited={7}/{8} restoreOutputSeen={9}" -f $report.result, $bySeverity.critical, $bySeverity.high, $bySeverity.moderate, $bySeverity.low, $down.Count, $toolErrors.Count, $listedProjects.Count, $sdkProjectCount, $restoreSeen)
 if ($failed) { exit 1 }
 exit 0

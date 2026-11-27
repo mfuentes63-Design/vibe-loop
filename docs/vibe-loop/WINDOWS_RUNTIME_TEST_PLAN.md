@@ -46,7 +46,9 @@ Evidence for a failure:
 **Expected:**
 - no hash mismatch
 - `PACKAGE-INFO.json` shows `"runtimeVerified": false` and the commit under test
+- `VERIFICATION.json` has `"problems": []`, `uiExecutable` = `app/plugins/UI/VibeLoop.UI.exe`, no `Lively.UI.WinUI` in `processNamesInPackage`, and `pri.resourceMaps` containing `Lively.UI.WinUI`
 - the baseline lists no `VibeLoop` Run entry and no Vibe Loop folders
+- Record the CI evidence for the run that built the package: the audit log line `Dependency audit PASS: … toolErrors=0 sdkProjectsAudited=N/N restoreOutputSeen=True` and the package line `Package verification passed: …`. A PASS is policy-specific: the open moderate CefSharp advisory is still a residual risk.
 
 ### T1 — First start and clean exit [GATE]
 1. Start `app\VibeLoop.exe`.
@@ -73,8 +75,9 @@ Evidence for a failure:
 1. Start `app\VibeLoop.exe`, then start it a second time. **Expected:** no second tray icon; the existing UI comes to the front.
 2. While it runs, take a snapshot. **Expected:** mutex `VIBELOOP:DESKTOPWALLPAPERSYSTEM` = true, and a pipe named `Grpc_VIBELOOP:DESKTOPWALLPAPERSYSTEM<username>` exists.
 3. In Settings, change a few options: theme, *Wallpaper > Video player*, *System > Tray icon* (turn it back on afterwards). Close the UI window and reopen it from the tray. **Expected:** the values persist and `Settings.json` reflects them.
-4. Kill `Lively.UI.WinUI.exe` in Task Manager, then double-click the tray icon. **Expected:** the UI reopens and talks to the core (the library loads).
-5. Run `app\plugins\UI\Lively.UI.WinUI.exe` while the core is **not** running. **Expected:** the message box "Wallpaper core is not running, run VibeLoop.exe first…" titled *Vibe Loop*.
+4. Kill `VibeLoop.UI.exe` in Task Manager, then double-click the tray icon. **Expected:** the UI reopens and talks to the core (the library loads).
+5. Run `app\plugins\UI\VibeLoop.UI.exe` while the core is **not** running. **Expected:** the message box "Wallpaper core is not running, run VibeLoop.exe first…" titled *Vibe Loop*.
+6. In Task Manager › Details, the UI process is `VibeLoop.UI.exe` (description *Vibe Loop*) and there is **no** `Lively.UI.WinUI.exe`. Look at the window title, the x:Uid strings (settings labels, the first-run tray hint) and the Help and About pages. **Expected:** all text resolves, with nothing blank and no raw resource keys. This is the runtime check for the UI executable rename; CI only checks the PRI index statically.
 
 ### T3 — Video wallpaper (mpv, default) [GATE]
 1. **Add wallpaper** → pick `test-fixtures\vibeloop-test-video.mp4` → set it as the wallpaper.
@@ -112,8 +115,8 @@ Use per-display wallpapers, then *Span* and *Duplicate*. Disconnect and reconnec
 ### T7 — Watchdog scope [GATE]
 1. Set the video wallpaper (T3) and open the UI.
 2. End `VibeLoop.exe` in Task Manager (*End task*).
-3. **Expected:** within a few seconds, `mpv.exe` and `Lively.UI.WinUI.exe` from this package exit, and the desktop shows the normal Windows wallpaper again.
-4. The cross-app part of this test is in T11 step 5.
+3. **Expected:** within a few seconds, `mpv.exe` and `VibeLoop.UI.exe` from this package exit, and the desktop shows the normal Windows wallpaper again.
+4. The cross-app parts of this test are T11 steps 5 and 6.
 
 ### T8 — Screensaver, manual (no registration) [GATE]
 Run these from a terminal in `app\`. The `.scr` finds `VibeLoop.exe` next to itself because no Vibe Loop installation is registered.
@@ -142,29 +145,47 @@ Run these from a terminal in `app\`. The `.scr` finds `VibeLoop.exe` next to its
 3. Turn it **off**. **Expected:** the `VibeLoop` Run value is gone, and Run entries equal the baseline.
 
 ### T11 — Coexistence with upstream Lively Wallpaper [GATE]
-1. **In the VM only:** install the official Lively Wallpaper from https://github.com/rocksdanister/lively/releases. Start it and set any wallpaper. Snapshot `t11-lively`.
+Vibe Loop's UI runs as `VibeLoop.UI.exe`. Upstream Lively's watchdog kills every process named `Lively.UI.WinUI` when its core exits, and Vibe Loop no longer has a process with that name. **Both directions must pass.**
+
+1. **In the VM only:** install the official Lively Wallpaper from https://github.com/rocksdanister/lively/releases and start it. Snapshot `t11-lively`.
 2. Start Vibe Loop. **Expected:**
    - two tray icons (Lively and Vibe Loop)
-   - Vibe Loop does **not** forward its launch to Lively
-   - Lively does not forward to Vibe Loop
+   - Vibe Loop does **not** forward its launch to Lively, and Lively does not forward to Vibe Loop
    - the snapshot shows both mutexes and both gRPC pipes
-3. Change a setting in each app. **Expected:** `%LOCALAPPDATA%\Lively Wallpaper\Settings.json` and `%LOCALAPPDATA%\Vibe Loop\Settings.json` change independently.
-4. Close each app's UI and reopen it from its own tray icon. **Expected:** each UI connects to its own core. The Vibe Loop UI shows only Vibe Loop's library.
-5. With **both UIs open**, end `VibeLoop.exe` in Task Manager. **Expected:**
+   - Task Manager shows `VibeLoop.UI.exe` for Vibe Loop and `Lively.UI.WinUI.exe` for Lively
+3. Change a setting in each app, then snapshot and compare with `t11-lively`. **Expected:** `appData.vibeLoop.files.Settings.json` and `appData.lively.files.Settings.json` each change only after a change in their own app.
+4. Close each app's UI and reopen it from its own tray icon. **Expected:** each UI connects to its own core. Vibe Loop's library shows only Vibe Loop's wallpapers. The `appData.*.library` fingerprints don't change unless you add a wallpaper in that app.
+5. **Vibe Loop → Lively:** with **both UIs open**, end `VibeLoop.exe` in Task Manager. **Expected:**
    - Vibe Loop's UI and players exit
-   - **Lively's UI (also `Lively.UI.WinUI.exe`, but from Lively's install folder) keeps running**
-   - this is the watchdog installation filter
-6. Do the reverse: end Lively's core. **Expected:** Vibe Loop's UI keeps running. Lively's own (upstream) watchdog may close every `Lively.UI.WinUI` process, so if Vibe Loop's UI closes here, record it as an upstream limitation, not a Vibe Loop fault.
-7. Exit both apps and uninstall Lively. **Expected:**
+   - **Lively's UI and core keep running**
+6. **Lively → Vibe Loop:** start Vibe Loop again and open both UIs. End Lively's core (`Lively.exe`). **Expected:**
+   - Lively's UI exits (its own watchdog)
+   - **Vibe Loop's `VibeLoop.UI.exe` and core keep running**, and the Vibe Loop UI still works (open Settings)
+   - **FAIL** if Vibe Loop's UI closes
+7. **Desktop wallpaper ownership.** Both apps draw behind the desktop icons in the same Windows desktop host (WorkerW). Separate settings and mutexes don't guarantee two renderers can share it, so this step records what actually happens. Use a single display unless noted.
+   1. Set a wallpaper in Lively (e.g. its default). Then set `vibeloop-test-video.mp4` in Vibe Loop on the **same** display. Record which wallpaper is visible, and whether each app's players keep running (Task Manager).
+   2. In Lively, set or re-apply a wallpaper. Record which is visible.
+   3. Close the wallpaper in Vibe Loop (tray → close wallpaper). **Expected:** Lively's wallpaper is visible again or reappears after Lively re-applies it; neither app crashes or restarts.
+   4. Exit Vibe Loop completely. **Expected:** Lively keeps rendering. If the desktop host was reset, at most one "re-apply wallpaper" in Lively restores it.
+   5. Repeat 1–4 with the roles swapped (exit Lively while Vibe Loop renders).
+   6. With 2 displays (if available): Lively on display 1, Vibe Loop on display 2. Record whether both render at the same time.
+
+   **Pass criteria:**
+   - no crash, hang or restart loop in either app
+   - neither app's settings or library change (snapshot fingerprints)
+   - after one app exits, the other renders again by itself or after a single re-apply
+
+   Simultaneous rendering on the **same** display isn't required and isn't a supported configuration. Note the observed behaviour.
+8. Exit both apps and uninstall Lively. Snapshot and compare with `t11-lively`. **Expected:**
    - Lively's uninstaller removes only Lively
-   - Vibe Loop's folders, its settings and the package folder are untouched (snapshot)
+   - `appData.vibeLoop` (settings hashes, library fingerprint) and the package folder are unchanged by the uninstall
 
 ### T12 — Upstream services disabled
 1. Run `ipconfig /flushdns` **in the VM**, start Vibe Loop, open every tab, wait 2 minutes.
 2. Then:
    ```powershell
    Get-DnsClientCache | Where-Object Entry -match 'livelywallpaper|api\.github\.com' | Format-Table Entry, Data
-   Get-NetTCPConnection -State Established | Where-Object { (Get-Process -Id $_.OwningProcess -EA 0).ProcessName -in 'VibeLoop','Lively.UI.WinUI' }
+   Get-NetTCPConnection -State Established | Where-Object { (Get-Process -Id $_.OwningProcess -EA 0).ProcessName -in 'VibeLoop','VibeLoop.UI' }
    ```
 **Expected:**
 - no `api.livelywallpaper.net` or `livelywallpaper.net` lookup, and no update check against `api.github.com`
@@ -199,4 +220,6 @@ Run these from a terminal in `app\`. The `.scr` finds `VibeLoop.exe` next to its
 | Transitive security pins (`System.Private.Uri` 4.3.2, `System.Text.RegularExpressions` 4.3.1, `System.Text.Json` 8.0.5) | New assemblies in the core, UI and .NET Framework players' graphs | T1–T4 (each player starts) |
 | Magick.NET 14.17.2 (security update) | Native ImageMagick changed; used for thumbnails, GIF capture and the taskbar accent | T3–T5 (thumbnails), T4 import |
 | Watchdog installation filter | New code (Phase 1) | T7, T11 |
+| UI executable renamed to `VibeLoop.UI.exe` (RootNamespace and PRI index unchanged; CI dumps the PRI) | Removes the process-name collision with upstream Lively's watchdog, but WinUI resource resolution is only statically verified | T1, T2 step 6, T11 steps 5–6 |
+| Shared desktop host (WorkerW) with Lively | Two wallpaper engines on one Windows desktop | T11 step 7 |
 | `VibeLoop.scr` side-by-side lookup | New code (Phase 1B) | T8, T9 |

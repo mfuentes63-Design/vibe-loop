@@ -2,8 +2,19 @@
 
 Policy: NuGet audit covers every project, direct and transitive packages, at every severity
 (`src/Lively/Directory.Build.props`). Nothing is suppressed. CI (`build/audit/Invoke-DependencyAudit.ps1`)
-**fails** on any high or critical advisory and on any package downgrade (NU1605), and **reports**
-moderate and low advisories as warnings. Every run uploads its report as the `dependency-audit` artifact.
+**fails** on:
+- any high or critical advisory
+- any package downgrade (NU1605)
+- any `dotnet list --vulnerable` tool error, or an SDK-style project it couldn't audit
+- a restore log that contains no restore output
+
+The last two make the audit fail closed when it can't see everything. Moderate and low advisories are
+**reported** as warnings. Every run prints
+`Dependency audit <PASS|FAIL>: … toolErrors=N sdkProjectsAudited=X/Y restoreOutputSeen=…` and uploads the
+`dependency-audit` artifact.
+
+**"PASS" is policy-specific:** it means no finding at or above the threshold, not "no vulnerabilities".
+Open advisories below the threshold are residual risks and are listed below.
 
 ## Findings before Phase 1B
 
