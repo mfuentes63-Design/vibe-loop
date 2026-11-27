@@ -208,7 +208,8 @@ namespace Lively.Models
             CefDiskCache = false;
             DebugMenu = false;
             IsBetaOptIn = false;
-            ApplicationTheme = AppTheme.Dark;
+            // Vibe Loop design direction: bright/playful, not dark by default (upstream default: Dark).
+            ApplicationTheme = AppTheme.Light;
             RemoteDesktopPause = AppRules.pause;
             PowerSaveModePause = AppRules.ignore;
             LockScreenAutoWallpaper = false;

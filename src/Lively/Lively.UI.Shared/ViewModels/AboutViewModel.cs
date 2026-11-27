@@ -9,7 +9,7 @@ namespace Lively.UI.Shared.ViewModels
         [RelayCommand]
         private void OpenWebsite()
         {
-            LinkUtil.OpenBrowser("https://livelywallpaper.net");
+            LinkUtil.OpenBrowser(Constants.ApplicationType.RepositoryUrl);
         }
     }
 }

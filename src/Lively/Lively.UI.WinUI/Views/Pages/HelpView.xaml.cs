@@ -29,14 +29,15 @@ namespace Lively.UI.WinUI.Views.Pages
             this.InitializeComponent();
         }
 
-        private void WebsiteCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser("https://www.livelywallpaper.net");
+        private void WebsiteCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser(Constants.ApplicationType.RepositoryUrl);
 
+        // Vibe Loop: wallpaper engine documentation is still maintained upstream.
         private void DocumentationCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser("https://github.com/rocksdanister/lively/wiki");
 
         private void CommunityCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser("https://github.com/rocksdanister/lively/discussions");
 
-        private void SoureCodeCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser("https://github.com/rocksdanister/lively");
+        private void SoureCodeCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser(Constants.ApplicationType.RepositoryUrl);
 
-        private void ReportBugCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser("https://github.com/rocksdanister/lively/wiki/Common-Problems");
+        private void ReportBugCard_Click(object sender, RoutedEventArgs e) => LinkUtil.OpenBrowser(Constants.ApplicationType.RepositoryUrl + "/issues");
     }
 }

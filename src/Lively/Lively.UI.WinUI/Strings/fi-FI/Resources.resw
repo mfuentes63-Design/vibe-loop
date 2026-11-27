@@ -136,7 +136,7 @@
     <value>API-rajapinta ja dokumentaatio</value>
   </data>
   <data name="DescExplorerCrash" xml:space="preserve">
-    <value>Lively on kohdannut kriittisen virheen.
+    <value>Vibe Loop on kohdannut kriittisen virheen.
 
 Windows Explorer uudelleenkäynnistyi kahdesti viimeisen 30 sekunnin aikana! Tämä voi olla ristiriita Livelyn ja muiden työpöydän taustakuvapalveluiden tai Windowsin kanssa. Uusien virheiden varalta kaikki taustakuvat on päätetty.</value>
   </data>
@@ -180,7 +180,7 @@ Haitalliset sovellukset voivat isännöidä haittaohjelmia ja viruksia ja vahing
 Jatka vain, jos luotat tähän sovellukseen.</value>
   </data>
   <data name="MinimizedTray.Text" xml:space="preserve">
-    <value>Lively piilotetaan järjestelmäkuvakkeeseen oikeassa alakulmassa, paina hiiren oikealla painikkeella jatkaaksesi.</value>
+    <value>Vibe Loop piilotetaan järjestelmäkuvakkeeseen oikeassa alakulmassa, paina hiiren oikealla painikkeella jatkaaksesi.</value>
   </data>
   <data name="DescriptionPleaseRestartLively" xml:space="preserve">
     <value>Käynnistä ohjelma uudelleen, jotta asetus tulee voimaan</value>
@@ -217,20 +217,20 @@ Jatka vain, jos luotat tähän sovellukseen.</value>
 Päivityksiä tulee usein ja ne saattavat sisältää vikoja!</value>
   </data>
   <data name="HideSysTray.Description" xml:space="preserve">
-    <value>Järjestelmäkuvakkeen näkyvyys, Lively jatkaa suorittamissa piilotetussa kuvakkeessa</value>
+    <value>Järjestelmäkuvakkeen näkyvyys, Vibe Loop jatkaa suorittamissa piilotetussa kuvakkeessa</value>
   </data>
   <data name="HideSysTray.Header" xml:space="preserve">
     <value>Ilmaisinalueen kuvake</value>
   </data>
   <data name="Language.Description" xml:space="preserve">
-    <value>Lively käynnistyy uudelleen vaihtaakseen kielen</value>
+    <value>Vibe Loop käynnistyy uudelleen vaihtaakseen kielen</value>
   </data>
   <data name="Language.Header" xml:space="preserve">
     <value>Kieli</value>
   </data>
   <data name="LivelyExceptionAppUpdateFail" xml:space="preserve">
     <value>Päivitys epäonnistui, kokeile asentajan lataamista täältä:
-https://github.com/rocksdanister/lively/releases</value>
+https://github.com/mfuentes63-Design/vibe-loop/releases</value>
   </data>
   <data name="LivelyExceptionDamagedZipFile" xml:space="preserve">
     <value>Vaurioitunut taustakuvatiedosto, kokeile uudelleenlatausta</value>
@@ -242,12 +242,12 @@ Ohjeet lokitiedoston jakamiseen:
 https://github.com/rocksdanister/lively/wiki</value>
   </data>
   <data name="LivelyExceptionHighContrastMode" xml:space="preserve">
-    <value>Lively ei toimi kunnolla Windows High Contrast -tilassa käytössä!
+    <value>Vibe Loop ei toimi kunnolla Windows High Contrast -tilassa käytössä!
 Poista High Contrast -tila käytöstä ja yritä uudelleen</value>
   </data>
   <data name="LivelyExceptionMediaPlayback" xml:space="preserve">
     <value>Media playback failed :(
-Try changing the videoplayer in lively settings.
+Try changing the videoplayer in Vibe Loop settings.
 
 In order to better understand this error and fix the issue, share the log file with the developer.
 Instructions for sharing log file:
@@ -257,18 +257,18 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>Ei Lively-taustakuvatiedosto</value>
   </data>
   <data name="LivelyExceptionSafeModeStart" xml:space="preserve">
-    <value>Lively ei sulkeutunut kunnolla, aloitetaan turvallisessa tilassa.
+    <value>Vibe Loop ei sulkeutunut kunnolla, aloitetaan turvallisessa tilassa.
 Haluatko palauttaa viimeisimmät taustakuvat?</value>
   </data>
   <data name="LivelyExceptionWorkerWSetupFail" xml:space="preserve">
-    <value>Näyttää siltä, että jotkut asetukset täytyy asettaa, jotta Lively saataisiin toimimaan:
+    <value>Näyttää siltä, että jotkut asetukset täytyy asettaa, jotta Vibe Loop saataisiin toimimaan:
 1. Paina Win + R -näppäimiä avataksesi Suorita-sovelluksen,
 2. Kirjoita "SystemPropertiesPerformance.exe" ja, napsauta "OK" avataksesi suorituskykyasetukset.
 3. Ota käyttöön "Animoi ohjaimet ja elementit ikkunoiden sisäpuolella" (Jos ne on jo valittu, poista ja valitse uudelleen) &amp; ota käyttöön.
 4. Napsauta "Käytä" ja paina "OK" sulkeaksesi ikkunan.
 
 Jos Windows 7 on juuri asetettu - Säädä paras ulkonäkö &amp; Käytä.
-Jos ikkuna ei vieläkään toimi, sulje ja käynnistä Windows ja Lively uudestaan.
+Jos ikkuna ei vieläkään toimi, sulje ja käynnistä Windows ja Vibe Loop uudestaan.
 (Ei toimi joissakin Windows 10 Insider Build versioissa)</value>
   </data>
   <data name="Startup.Description" xml:space="preserve">
@@ -425,7 +425,7 @@ Jos ikkuna ei vieläkään toimi, sulje ja käynnistä Windows ja Lively uudesta
     <value>Paikalla</value>
   </data>
   <data name="TextOpenLively" xml:space="preserve">
-    <value>Avaa Lively</value>
+    <value>Avaa Vibe Loop</value>
   </data>
   <data name="PauseAlgorithmTypeAllProcess.Content" xml:space="preserve">
     <value>Kaikki prosessit</value>
@@ -614,7 +614,7 @@ Jos ikkuna ei vieläkään toimi, sulje ja käynnistä Windows ja Lively uudesta
     <value>Keskeytä taustakuva, kun näitä sovelluksia käytetään</value>
   </data>
   <data name="TipAppTheme" xml:space="preserve">
-    <value>Lively mukautuu järjestelmän teeman asetuksiin, muuttaaksesi ulkoasua, mene</value>
+    <value>Vibe Loop mukautuu järjestelmän teeman asetuksiin, muuttaaksesi ulkoasua, mene</value>
   </data>
   <data name="BatteryPower.Description" xml:space="preserve">
     <value>Muuta toistoa, kun ei ole latauksessa</value>
@@ -710,7 +710,7 @@ Jos ikkuna ei vieläkään toimi, sulje ja käynnistä Windows ja Lively uudesta
     <value>Koko näytön sovellukset</value>
   </data>
   <data name="TitleAppName" xml:space="preserve">
-    <value>Lively Taustakuva</value>
+    <value>Vibe Loop Taustakuva</value>
   </data>
   <data name="AppRules.Header" xml:space="preserve">
     <value>Sovelluskohtaiset säännöt</value>
@@ -773,7 +773,7 @@ Jos ikkuna ei vieläkään toimi, sulje ja käynnistä Windows ja Lively uudesta
     <value>Kirjasto</value>
   </data>
   <data name="TitleLivelySetup" xml:space="preserve">
-    <value>Lively asetukset</value>
+    <value>Vibe Loop asetukset</value>
   </data>
   <data name="TitleLocation" xml:space="preserve">
     <value>Sijainti</value>

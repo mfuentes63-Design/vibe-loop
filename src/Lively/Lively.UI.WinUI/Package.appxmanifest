@@ -17,8 +17,8 @@
     Version="1.0.0.0" />
   
   <Properties>
-    <DisplayName>Lively Wallpaper</DisplayName>
-    <PublisherDisplayName>rocksdanister</PublisherDisplayName>
+    <DisplayName>Vibe Loop</DisplayName>
+    <PublisherDisplayName>Vibe Loop</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -37,12 +37,12 @@
       Executable="Build\VibeLoop.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Lively Wallpaper"
-        Description="Free and open-source software that allows users to set animated and interactive desktop wallpapers."
+        DisplayName="Vibe Loop"
+        Description="Make your screen come alive. Animated and interactive desktop wallpapers, based on Lively Wallpaper (GPL-3.0)."
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png" ShortName="Lively Wallpaper">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png" ShortName="Vibe Loop">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo"/>
             <uap:ShowOn Tile="wide310x150Logo"/>
@@ -53,7 +53,7 @@
       </uap:VisualElements>
       <Extensions>
         <desktop:Extension Category="windows.startupTask" Executable="Build\VibeLoop.exe" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="AppStartup" Enabled="false" DisplayName="Lively Wallpaper" />
+          <desktop:StartupTask TaskId="AppStartup" Enabled="false" DisplayName="Vibe Loop" />
         </desktop:Extension>
       </Extensions>
     </Application>
