@@ -371,7 +371,16 @@ elseif (Test-Path $priFile) {
         $mapNames = @([regex]::Matches($xmlText, '<ResourceMap\s+name="([^"]+)"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
         $hasTitle = $xmlText -match 'name="TitleAppName"'
         $hasMainWindowXbf = $xmlText -match 'MainWindow\.xbf'
-        $titleValueVibeLoop = $xmlText -match '(?s)name="TitleAppName".{0,1500}?Vibe Loop'
+        # Isolate the TitleAppName NamedResource block (all language candidates) and log an excerpt as evidence.
+        $titleBlock = ''
+        $tm = [regex]::Match($xmlText, '(?s)<NamedResource[^>]*name="TitleAppName".*?</NamedResource>')
+        if ($tm.Success) { $titleBlock = $tm.Value }
+        $dumpHasValues = $xmlText -match '<Value>'
+        $titleValueVibeLoop = $titleBlock -match 'Vibe Loop'
+        $excerpt = $titleBlock
+        if ($excerpt.Length -gt 1200) { $excerpt = $excerpt.Substring(0, 1200) }
+        Write-Host "PRI TitleAppName block ($($titleBlock.Length) chars, dump has <Value> elements: $dumpHasValues):"
+        Write-Host $excerpt
         $pri = [ordered]@{}
         $pri['checked'] = $true
         $pri['tool'] = $makepri
@@ -380,10 +389,12 @@ elseif (Test-Path $priFile) {
         $pri['expectedPrimaryMap'] = 'Lively.UI.WinUI'
         $pri['hasTitleAppName'] = [bool]$hasTitle
         $pri['titleAppNameHasVibeLoopValue'] = [bool]$titleValueVibeLoop
+        $pri['dumpIncludesValues'] = [bool]$dumpHasValues
         $pri['hasMainWindowXbf'] = [bool]$hasMainWindowXbf
         if ($mapNames -notcontains 'Lively.UI.WinUI') { $problems.Add("UI resources.pri primary map changed: found [$($mapNames -join ', ')], expected Lively.UI.WinUI") }
         if (-not $hasTitle) { $problems.Add('UI resources.pri has no TitleAppName string resource') }
-        if (-not $titleValueVibeLoop) { $problems.Add('UI resources.pri TitleAppName does not contain the value "Vibe Loop"') }
+        if ($dumpHasValues -and -not $titleValueVibeLoop) { $problems.Add('UI resources.pri TitleAppName does not contain the value "Vibe Loop"') }
+        if (-not $dumpHasValues) { Write-Host '::warning title=PRI dump::makepri dump contains no string values; TitleAppName value not checked (key presence and resource map were checked).' }
         if (-not $hasMainWindowXbf) { $problems.Add('UI resources.pri does not index MainWindow.xbf') }
     }
 }
