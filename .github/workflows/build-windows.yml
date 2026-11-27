@@ -97,6 +97,8 @@ jobs:
       - name: Assemble and verify test package (NOT runtime-verified)
         id: package
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}   # read-only GitHub API access to resolve pinned third-party release assets
         run: pwsh -NoProfile -File build/package/New-VibeLoopTestPackage.ps1 -OutputDirectory artifacts/package -Configuration $env:CONFIGURATION
 
       - name: Job summary
@@ -145,7 +147,7 @@ jobs:
           retention-days: 14
 
       - name: Enforce dependency audit
-        if: steps.audit.outcome == 'failure'
+        if: always() && steps.audit.outcome == 'failure'
         shell: pwsh
         run: |
           Write-Host "::error title=Dependency audit failed::High/critical advisories or package downgrades were found. See the 'dependency-audit' artifact and the job summary."

@@ -29,6 +29,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+trap {
+    $pos = if ($_.InvocationInfo) { $_.InvocationInfo.PositionMessage } else { '' }
+    Write-Host "::error title=Dependency audit script failed::$($_.Exception.Message) $($pos -replace '\r?\n', ' ')"
+    Write-Host $_.ScriptStackTrace
+    exit 1
+}
 $rank = @{ low = 1; moderate = 2; high = 3; critical = 4 }
 $codeSeverity = @{ NU1901 = 'low'; NU1902 = 'moderate'; NU1903 = 'high'; NU1904 = 'critical' }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
@@ -46,32 +52,32 @@ $advRegex = [regex] '(?<proj>[^\s:]+\.csproj)\s*:\s*warning (?<code>NU190[1-4]):
 $downRegex = [regex] '(?<proj>[^\s:]+\.csproj)\s*:\s*(?:warning|error) NU1605: Detected package downgrade: (?<pkg>\S+) from (?<from>\S+) to (?<to>\S+)'
 $rangeRegex = [regex] '(?<proj>[^\s:]+\.csproj)\s*:\s*warning NU1608: (?<msg>.+?)(?:\s+\[|$)'
 
-foreach ($line in [IO.File]::ReadLines((Resolve-Path $RestoreLog).Path)) {
-    $m = $advRegex.Match($line)
-    if ($m.Success) {
-        $url = $m.Groups['url'].Value.TrimEnd('.', ']')
-        $key = "$($m.Groups['pkg'].Value)|$($m.Groups['ver'].Value)|$url"
+$logLines = [IO.File]::ReadAllLines((Resolve-Path $RestoreLog).Path)
+for ($i = 0; $i -lt $logLines.Length; $i++) {
+    $line = [string]$logLines[$i]
+    $ma = $advRegex.Match($line)
+    $md = $downRegex.Match($line)
+    $mr = $rangeRegex.Match($line)
+    if ($ma.Success) {
+        $url = $ma.Groups['url'].Value.TrimEnd([char[]]@('.', ']'))
+        $key = "$($ma.Groups['pkg'].Value)|$($ma.Groups['ver'].Value)|$url"
         if (-not $advisories.ContainsKey($key)) {
-            $advisories[$key] = [ordered]@{
-                package = $m.Groups['pkg'].Value; version = $m.Groups['ver'].Value
-                severity = $m.Groups['sev'].Value; advisory = $url; code = $m.Groups['code'].Value
-                projects = [System.Collections.Generic.SortedSet[string]]::new(); sources = [System.Collections.Generic.SortedSet[string]]::new()
+            $advisories[$key] = @{
+                package = $ma.Groups['pkg'].Value; version = $ma.Groups['ver'].Value
+                severity = $ma.Groups['sev'].Value; advisory = $url; code = $ma.Groups['code'].Value
+                projects = @{}; sources = @{}
             }
         }
-        [void]$advisories[$key].projects.Add((Get-ProjectName $m.Groups['proj'].Value))
-        [void]$advisories[$key].sources.Add('restore')
-        continue
+        $advisories[$key].projects[(Get-ProjectName $ma.Groups['proj'].Value)] = $true
+        $advisories[$key].sources['restore'] = $true
     }
-    $m = $downRegex.Match($line)
-    if ($m.Success) {
-        $key = "$(Get-ProjectName $m.Groups['proj'].Value)|$($m.Groups['pkg'].Value)"
-        $downgrades[$key] = [ordered]@{ project = (Get-ProjectName $m.Groups['proj'].Value); package = $m.Groups['pkg'].Value; from = $m.Groups['from'].Value; to = $m.Groups['to'].Value.TrimEnd('.') }
-        continue
+    elseif ($md.Success) {
+        $proj = Get-ProjectName $md.Groups['proj'].Value
+        $downgrades["$proj|$($md.Groups['pkg'].Value)"] = @{ project = $proj; package = $md.Groups['pkg'].Value; from = $md.Groups['from'].Value; to = $md.Groups['to'].Value.TrimEnd([char[]]@('.')) }
     }
-    $m = $rangeRegex.Match($line)
-    if ($m.Success) {
-        $key = "$(Get-ProjectName $m.Groups['proj'].Value)|$($m.Groups['msg'].Value)"
-        $outOfRange[$key] = [ordered]@{ project = (Get-ProjectName $m.Groups['proj'].Value); message = $m.Groups['msg'].Value.Trim() }
+    elseif ($mr.Success) {
+        $proj = Get-ProjectName $mr.Groups['proj'].Value
+        $outOfRange["$proj|$($mr.Groups['msg'].Value)"] = @{ project = $proj; message = $mr.Groups['msg'].Value.Trim() }
     }
 }
 
@@ -102,14 +108,15 @@ if (-not $SkipDotnetList) {
                         $url = "$($v.advisoryurl)"
                         $key = "$($pkg.id)|$($pkg.resolvedVersion)|$url"
                         if (-not $advisories.ContainsKey($key)) {
-                            $advisories[$key] = [ordered]@{
-                                package = $pkg.id; version = $pkg.resolvedVersion; severity = $sev; advisory = $url
-                                code = ($codeSeverity.GetEnumerator() | Where-Object Value -eq $sev | Select-Object -First 1).Key
-                                projects = [System.Collections.Generic.SortedSet[string]]::new(); sources = [System.Collections.Generic.SortedSet[string]]::new()
+                            $code = $null
+                            foreach ($c in $codeSeverity.Keys) { if ($codeSeverity[$c] -eq $sev) { $code = $c } }
+                            $advisories[$key] = @{
+                                package = "$($pkg.id)"; version = "$($pkg.resolvedVersion)"; severity = $sev; advisory = $url
+                                code = $code; projects = @{}; sources = @{}
                             }
                         }
-                        [void]$advisories[$key].projects.Add($name)
-                        [void]$advisories[$key].sources.Add('dotnet-list')
+                        $advisories[$key].projects[$name] = $true
+                        $advisories[$key].sources['dotnet-list'] = $true
                     }
                 }
             }
@@ -119,8 +126,14 @@ if (-not $SkipDotnetList) {
 
 # ---------------------------------------------------------------- evaluate + report
 $threshold = $rank[$FailOnSeverity]
-$adv = @($advisories.Values | Sort-Object @{ e = { -$rank[$_.severity] } }, package, advisory | ForEach-Object {
-        $_.projects = @($_.projects); $_.sources = @($_.sources); [pscustomobject]$_ })
+$adv = @(foreach ($a in $advisories.Values) {
+        [pscustomobject]@{
+            severity = $a.severity; package = $a.package; version = $a.version; advisory = $a.advisory; code = $a.code
+            projects = @($a.projects.Keys | Sort-Object); sources = @($a.sources.Keys | Sort-Object)
+            rank = [int]$rank[$a.severity]
+        }
+    })
+$adv = @($adv | Sort-Object -Property @{ Expression = 'rank'; Descending = $true }, package, advisory)
 $blocking = @($adv | Where-Object { $rank[$_.severity] -ge $threshold })
 $nonBlocking = @($adv | Where-Object { $rank[$_.severity] -lt $threshold })
 $down = @($downgrades.Values | ForEach-Object { [pscustomobject]$_ })

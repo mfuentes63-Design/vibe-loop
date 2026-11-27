@@ -30,6 +30,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+trap {
+    $pos = if ($_.InvocationInfo) { $_.InvocationInfo.PositionMessage } else { '' }
+    Write-Host "::error title=Test package script failed::$($_.Exception.Message) $($pos -replace '\r?\n', ' ')"
+    Write-Host $_.ScriptStackTrace
+    exit 1
+}
 $ProgressPreference = 'SilentlyContinue'
 
 function Write-Step([string] $m) { Write-Host "==> $m" -ForegroundColor Cyan }
@@ -117,15 +123,62 @@ foreach ($f in 'VibeLoop.scr', 'VibeLoop.Screensaver.exe', 'VibeLoop.Screensaver
 # ------------------------------------------------------------------ 3. pinned third-party runtimes
 $manifest = Get-Content (Join-Path $PSScriptRoot 'third-party-runtimes.json') -Raw | ConvertFrom-Json
 $thirdParty = @()
+$ghHeaders = @{ 'Accept' = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28'; 'User-Agent' = 'vibe-loop-test-package' }
+$ghToken = if ($env:GH_TOKEN) { $env:GH_TOKEN } elseif ($env:GITHUB_TOKEN) { $env:GITHUB_TOKEN } else { $null }
+if ($ghToken) { $ghHeaders['Authorization'] = "Bearer $ghToken" }
+
+function Resolve-GitHubAsset($r) {
+    $repo = $r.github.repository; $tag = $r.github.tag; $pattern = $r.github.assetPattern
+    try {
+        $rel = Invoke-RestMethod -Headers $ghHeaders -Uri "https://api.github.com/repos/$repo/releases/tags/$tag"
+    } catch {
+        $lookupError = $_.Exception.Message
+        $hint = ''
+        try {
+            $recent = Invoke-RestMethod -Headers $ghHeaders -Uri "https://api.github.com/repos/$repo/releases?per_page=5"
+            $hint = ($recent | ForEach-Object {
+                    $t = $_.tag_name
+                    $m = @($_.assets | Where-Object { $_.name -match $pattern } | ForEach-Object { "$($_.name) ($($_.digest))" })
+                    "$t -> $($m -join '; ')"
+                }) -join ' | '
+        } catch { $hint = "could not list releases: $($_.Exception.Message)" }
+        Fail "$($r.name): release tag '$tag' not found in $repo ($lookupError). Recent releases and matching assets: $hint"
+    }
+    $assets = @($rel.assets | Where-Object { $_.name -match $pattern })
+    if ($assets.Count -ne 1) {
+        Fail "$($r.name): expected exactly one asset matching '$pattern' in $repo@$tag, found $($assets.Count): $((@($rel.assets) | ForEach-Object name) -join ', ')"
+    }
+    $asset = $assets[0]
+    $digest = if ($asset.PSObject.Properties['digest'] -and $asset.digest) { ($asset.digest -replace '^sha256:', '').ToLowerInvariant() } else { $null }
+    return [pscustomobject]@{ url = $asset.browser_download_url; name = $asset.name; size = $asset.size; digest = $digest; published = $rel.published_at }
+}
+
 foreach ($r in $manifest.runtimes) {
     Write-Step "Third-party runtime: $($r.name) $($r.version)"
-    $file = Join-Path $DownloadCache ([IO.Path]::GetFileName(([uri]$r.url).AbsolutePath))
-    if (-not (Test-Path $file)) { Invoke-WebRequest -Uri $r.url -OutFile $file -UseBasicParsing }
-    $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($hash -ne $r.sha256.ToLowerInvariant()) {
-        Remove-Item $file -Force
-        Fail "SHA-256 mismatch for $($r.name): expected $($r.sha256), got $hash ($($r.url)). Update build/package/third-party-runtimes.json only after verifying the new file."
+    if ($r.PSObject.Properties['github']) {
+        $res = Resolve-GitHubAsset $r
+    } else {
+        $res = [pscustomobject]@{ url = $r.url; name = [IO.Path]::GetFileName(([uri]$r.url).AbsolutePath); size = $null; digest = $null; published = $null }
     }
+    $pinned = if ($r.sha256) { $r.sha256.ToLowerInvariant() } else { $null }
+    if (-not $pinned -and -not $res.digest) { Fail "$($r.name): no pinned sha256 and no GitHub digest available for $($res.url) - refusing to use an unverified binary." }
+    $file = Join-Path $DownloadCache $res.name
+    if (-not (Test-Path $file)) { Invoke-WebRequest -Uri $res.url -OutFile $file -UseBasicParsing -Headers @{ 'User-Agent' = 'vibe-loop-test-package' } }
+    $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($res.digest -and $hash -ne $res.digest) {
+        Remove-Item $file -Force
+        Fail "$($r.name): downloaded file does not match GitHub's digest for $($res.name): expected $($res.digest), got $hash."
+    }
+    if ($pinned -and $hash -ne $pinned) {
+        Remove-Item $file -Force
+        Fail "SHA-256 mismatch for $($r.name): pinned $pinned, got $hash ($($res.url)). Update build/package/third-party-runtimes.json only after verifying the new file."
+    }
+    if (-not $pinned) {
+        Write-Host "::warning title=Unpinned third-party runtime::$($r.name) $($res.name) verified against GitHub digest only. Pin it: set ""sha256"": ""$hash"" in build/package/third-party-runtimes.json"
+    }
+    Write-Host "  $($res.name)  sha256 $hash  (GitHub digest: $(if ($res.digest) { 'match' } else { 'n/a' }); pinned: $(if ($pinned) { 'match' } else { 'NOT PINNED' }))"
+    $r | Add-Member -NotePropertyName resolved -NotePropertyValue $res -Force
+    $r | Add-Member -NotePropertyName verifiedSha256 -NotePropertyValue $hash -Force
     $dest = Ensure-Dir (Join-Path $app $r.destination)
     switch ($r.archive) {
         '7z' { & 7z x $file "-o$dest" -y | Out-Null; if ($LASTEXITCODE -ne 0) { Fail "7z extraction failed for $file" } }
@@ -145,7 +198,8 @@ foreach ($r in $manifest.runtimes) {
     if ($r.PSObject.Properties['removeAfterExtract']) {
         foreach ($rm in $r.removeAfterExtract) { $t = Join-Path $dest $rm; if (Test-Path $t) { Remove-Item $t -Recurse -Force } }
     }
-    $thirdParty += [ordered]@{ name = $r.name; version = $r.version; url = $r.url; sha256 = $hash; license = $r.license; source = $r.source }
+    $thirdParty += [ordered]@{ name = $r.name; version = $r.version; asset = $r.resolved.name; url = $r.resolved.url; sha256 = $r.verifiedSha256
+        githubDigestVerified = [bool]$r.resolved.digest; pinned = [bool]$r.sha256; license = $r.license; source = $r.source }
 }
 
 # ------------------------------------------------------------------ 4. MSVC runtime, app-local (redistributable files)
