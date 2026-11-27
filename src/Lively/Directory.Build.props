@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Vibe Loop: explicit NuGet vulnerability audit for every project in the solution (SDK-style and legacy).
+    Reports direct AND transitive packages with advisories of any severity as NU1901-NU1904 restore warnings.
+    Warnings are intentionally not suppressed or promoted to errors here; CI enforces the policy in
+    build/audit/Invoke-DependencyAudit.ps1 (fails on high/critical advisories and package downgrades).
+  -->
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+  </PropertyGroup>
+</Project>
