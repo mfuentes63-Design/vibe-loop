@@ -32,10 +32,17 @@ Requirements: Windows 10 1903 or later, Visual Studio 2022 with the .NET desktop
 3. The core executable is `VibeLoop.exe`. The screensaver launcher is built as
    `VibeLoop.Screensaver.exe` and copied to `VibeLoop.scr`.
 
-A successful build is not a runnable app on its own. The runtime layout also needs the `Plugins\`
-folder (mpv, web/video players, watchdog, UI) and the optional `Bundle\` starter wallpapers, and
-those are not part of this repository. The GitHub Actions workflow
-[`build-windows.yml`](.github/workflows/build-windows.yml) only checks compilation.
+A successful build is not a runnable app on its own. The runtime layout also needs the `plugins\`
+folder (mpv, web/video players, watchdog, UI), and those are not part of this repository.
+
+**Test package.** The [`build-windows.yml`](.github/workflows/build-windows.yml) workflow:
+- compiles the solution
+- runs a dependency audit that fails on high or critical advisories ([details](docs/vibe-loop/DEPENDENCY_SECURITY.md))
+- assembles a portable, self-contained Windows x64 test package with `build/package/New-VibeLoopTestPackage.ps1`: every plugin, a SHA-256-pinned mpv, notices and test fixtures
+
+The artifact is named `VibeLoop-TestPackage-x64-<sha>-NOT-RUNTIME-VERIFIED`. It is **not** an installer.
+Use it only in a disposable Windows VM, following
+[docs/vibe-loop/WINDOWS_RUNTIME_TEST_PLAN.md](docs/vibe-loop/WINDOWS_RUNTIME_TEST_PLAN.md).
 
 ## Compatibility
 

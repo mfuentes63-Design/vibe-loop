@@ -18,6 +18,9 @@
     <PackageReference Include="System.Management" Version="10.0.0" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
     <PackageReference Include="UACHelper" Version="1.3.0.5" />
+    <!-- Vibe Loop security pin: the netstandard1.x dependency graph resolves System.Text.RegularExpressions 4.3.0
+         (GHSA-cmhx-cq75-c4mj, high, ReDoS). Pinning the patched version here fixes every project that references Lively.Common. -->
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup>

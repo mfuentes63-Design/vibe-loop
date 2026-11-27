@@ -34,12 +34,12 @@ namespace Lively.Services
 
             if (PackageUtil.IsRunningAsPackaged)
             {
-                fileName = Path.Combine(Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\")), "Lively.UI.WinUI.exe");
+                fileName = Path.Combine(Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\")), global::Lively.Common.Constants.ApplicationType.UiExecutableName);
                 workingDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\"));
             }
             else
             {
-                fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "UI", "Lively.UI.WinUI.exe");
+                fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "UI", global::Lively.Common.Constants.ApplicationType.UiExecutableName);
                 workingDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugins", "UI");
             }
         }

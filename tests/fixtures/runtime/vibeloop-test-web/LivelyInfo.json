@@ -1,0 +1,19 @@
+{
+  "AppVersion": "2.2.1.5",
+  "Title": "Vibe Loop test - web",
+  "Thumbnail": "thumbnail.jpg",
+  "Preview": null,
+  "Desc": "Synthetic WebView2/CEF test wallpaper: animated gradient, clock, and property listener echo.",
+  "Author": "Vibe Loop test fixtures",
+  "License": "GPL-3.0 (same as Vibe Loop)",
+  "Contact": null,
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": null,
+  "IsAbsolutePath": false,
+  "Id": null,
+  "Tags": [
+    "test"
+  ],
+  "Version": 0
+}

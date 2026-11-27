@@ -1,4 +1,9 @@
 <Project>
+ <!-- Vibe Loop: MSBuild stops at the nearest Directory.Build.props, so chain to the solution-level one (NuGet audit settings). -->
+ <PropertyGroup>
+    <VibeLoopParentBuildProps>$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))</VibeLoopParentBuildProps>
+ </PropertyGroup>
+ <Import Project="$(VibeLoopParentBuildProps)" Condition="'$(VibeLoopParentBuildProps)' != ''" />
  <PropertyGroup>
     <IsMsixRelease>false</IsMsixRelease>
  </PropertyGroup>

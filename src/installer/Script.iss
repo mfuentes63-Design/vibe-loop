@@ -90,11 +90,12 @@ Name: "serbianlatin"; MessagesFile: "Languages\SerbianLatin.isl";
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; 
 ;GroupDescription: "{cm:AdditionalIcons}"
-Name: "windowsstartup";Description: "{cm:AutoStartProgram,{#MyAppName}}" 
+;Vibe Loop: startup is an opt-in app setting, not an installer task.
+;Name: "windowsstartup";Description: "{cm:AutoStartProgram,{#MyAppName}}" 
 
 [Registry]
-;current user only
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "VibeLoop"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks:windowsstartup
+; Vibe Loop: no startup entry is written by the installer. "Start with Windows" is an opt-in app setting
+; (HKCU Run value "VibeLoop", managed by the app); the uninstaller removes it, see CurUninstallStepChanged.
 
 ;[UninstallDelete]
 
@@ -162,6 +163,11 @@ end;
 // event fired when the uninstall step is changed: https://stackoverflow.com/revisions/12645836/1
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
+  // Vibe Loop: the app owns the "Start with Windows" entry (opt-in setting, value name = assembly name),
+  // so the installer never creates it; only remove it on uninstall. Never touches upstream Lively's "Lively" value.
+  if CurUninstallStep = usUninstall then
+    RegDeleteValue(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 'VibeLoop');
+
   // if we reached the post uninstall step (uninstall succeeded), then...
   if CurUninstallStep = usPostUninstall then
   begin

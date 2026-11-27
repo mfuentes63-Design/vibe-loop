@@ -49,6 +49,12 @@ namespace Lively.Utility.Screensaver
             {
                 Process.Start(Path.Combine(installedPath, "VibeLoop.exe"), startArgs);
             }
+            else if (TryGetSideBySideAppPath(out string sideBySidePath))
+            {
+                // Vibe Loop: portable/test layout - the .scr sits next to VibeLoop.exe and is run manually (e.g. "VibeLoop.scr /s"),
+                // so the app can be tested without installing it or registering it as the Windows screensaver.
+                Process.Start(sideBySidePath, startArgs);
+            }
             else
             {
                 // Don't work with DesktopBridge, Windows screensaver is not run on desktop session.
@@ -125,6 +131,23 @@ namespace Lively.Utility.Screensaver
                     GetRegistryValue(RegistryHive.LocalMachine, registryPath, appPathValueName, RegistryView.Registry32);
 
             return installPath != null;
+        }
+
+        /// <summary>
+        /// VibeLoop.exe in the same folder as this launcher. Only used when no Inno Setup install is registered.
+        /// A system-installed .scr (System32/SysWOW64) never has VibeLoop.exe next to it, so this does not change installed behavior.
+        /// </summary>
+        private static bool TryGetSideBySideAppPath(out string appPath)
+        {
+            appPath = null;
+            try
+            {
+                var candidate = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VibeLoop.exe");
+                if (File.Exists(candidate))
+                    appPath = candidate;
+            }
+            catch { /* Ignore */ }
+            return appPath != null;
         }
 
         private static bool IsSystemLocked()

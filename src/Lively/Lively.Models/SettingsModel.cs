@@ -155,7 +155,9 @@ namespace Lively.Models
             ScreensaverAudioIdleCheck = true;
             AppVersion = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
             AppPreviousVersion = string.Empty;
-            Startup = true;
+            // Vibe Loop: "Start with Windows" is opt-in (upstream default: true). The core applies this value on every
+            // launch (WindowsStartup.TrySetStartup), so a default of true silently added HKCU\...\Run\VibeLoop on first run.
+            Startup = false;
             IsFirstRun = true;
             ControlPanelOpened = false;
             AppFocusPause = AppRules.ignore;

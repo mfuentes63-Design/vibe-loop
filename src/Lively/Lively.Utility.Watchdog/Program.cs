@@ -68,9 +68,11 @@ namespace Lively.Utility.Watchdog
                 catch { }
             }
 
-            // Upstream killed every process named "Lively.UI.WinUI" system-wide, which would also close the UI of a
-            // separately installed Lively Wallpaper (same UI executable name). Restrict to UI processes belonging to this install.
-            foreach (var item in Process.GetProcessesByName("Lively.UI.WinUI"))
+            // Upstream killed every process named "Lively.UI.WinUI" system-wide. Vibe Loop's UI is VibeLoop.UI.exe
+            // (Lively.Common.Constants.ApplicationType.UiProcessName; this tool has no project references), so an
+            // installed Lively Wallpaper's UI is never matched. The install-folder filter is kept as defense in depth
+            // (e.g. two portable Vibe Loop copies).
+            foreach (var item in Process.GetProcessesByName("VibeLoop.UI"))
             {
                 try
                 {
