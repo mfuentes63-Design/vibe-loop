@@ -153,7 +153,7 @@ namespace Lively.UI.WinUI
                 .AddSingleton<GalleryViewModel>()
                 .AddSingleton<GallerySubscriptionViewModel>()
                 .AddSingleton<AppUpdateViewModel>()
-                .AddSingleton<ICacheService, DiskCacheService>((e) => new DiskCacheService(e.GetRequiredService<IHttpClientFactory>(), Path.Combine(Path.GetTempPath(), "Lively Wallpaper", "gallery")))
+                .AddSingleton<ICacheService, DiskCacheService>((e) => new DiskCacheService(e.GetRequiredService<IHttpClientFactory>(), Path.Combine(Path.GetTempPath(), global::Lively.Common.Constants.ApplicationType.Name, "gallery")))
                 .AddSingleton<IDepthEstimate, MiDaS>()
                 // Scoped
                 .AddScoped<IDialogNavigator, DialogNavigator>()

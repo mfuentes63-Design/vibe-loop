@@ -192,7 +192,8 @@ namespace Lively.Models
             TileSize = 1;
             DisplayIdentification = DisplayIdentificationMode.deviceId;
             UIMode = LivelyGUIState.normal;
-            WallpaperDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lively Wallpaper", "Library");
+            // Vibe Loop: must match Lively.Common.Constants.ApplicationType.Name (not referenced here to avoid a project cycle).
+            WallpaperDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Vibe Loop", "Library");
             WallpaperDirMoveExistingWallpaperNewDir = true;
             SysTrayIcon = true;
             WebDebugPort = string.Empty;
