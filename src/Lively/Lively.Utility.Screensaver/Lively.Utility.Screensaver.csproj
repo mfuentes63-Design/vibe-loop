@@ -8,7 +8,8 @@
     <ProjectGuid>{DE3A7521-77D2-462A-A25D-BF020EA5A77B}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>Lively.Utility.Screensaver</RootNamespace>
-    <AssemblyName>Lively.Utility.Screensaver</AssemblyName>
+    <!-- Vibe Loop: renamed from Lively.Utility.Screensaver; a VibeLoop.scr copy is produced after build (see target below). -->
+    <AssemblyName>VibeLoop.Screensaver</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -76,4 +77,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- Vibe Loop: Windows lists a screensaver by its .scr file name, so emit VibeLoop.scr next to the exe.
+       Installing it (copying to System32/SysWOW64 or right-click > Install) is a manual, user-initiated step. -->
+  <Target Name="VibeLoopCreateScreensaverFile" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(TargetDir)VibeLoop.scr" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(TargetPath).config" DestinationFiles="$(TargetDir)VibeLoop.scr.config" SkipUnchangedFiles="true" Condition="Exists('$(TargetPath).config')" />
+  </Target>
 </Project>

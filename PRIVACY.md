@@ -1,5 +1,12 @@
 # Privacy Policy
 
+> **Vibe Loop note.** This policy is inherited unchanged from Lively Wallpaper, which Vibe Loop is a fork of.
+> In Vibe Loop the upstream online gallery (login, subscriptions, uploads) and the automatic update check are
+> **disabled**, and Vibe Loop is not distributed through the Microsoft Store, so the "Microsoft Store users only"
+> section below does not apply. Wallpapers (for example web pages or online video streams) may still
+> load content from the internet themselves, and the optional depth-estimation model is downloaded from GitHub
+> only when you ask for it. Local logs are stored in `%LOCALAPPDATA%\Vibe Loop\logs`.
+
 **Content of the privacy policy**
 
 This application doesn’t:

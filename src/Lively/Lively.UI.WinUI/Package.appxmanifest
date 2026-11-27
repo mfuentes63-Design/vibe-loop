@@ -8,16 +8,17 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   IgnorableNamespaces="uap rescap mp">
 
+  <!-- Vibe Loop: placeholder MSIX identity, deliberately different from upstream's Microsoft Store identity
+       (12030rocksdanister.LivelyWallpaper). Publisher must match the signing certificate if MSIX is ever produced;
+       if it changes, update packageFamilyName in Lively.Utility.Screensaver/Program.cs. Family name: VibeLoop_srh4j84q0xahy -->
   <Identity
-    Name="12030rocksdanister.LivelyWallpaper"
-    Publisher="CN=D80CB9E2-21E6-4D9B-8533-660C768F3C5B"
-    Version="1.0.164.0" />
-
-  <mp:PhoneIdentity PhoneProductId="04bfe68a-b076-487d-957e-c3eea0ef5dd3" PhonePublisherId="1decb601-e64f-4088-bc00-0e28637c9926" />
+    Name="VibeLoop"
+    Publisher="CN=VibeLoop"
+    Version="1.0.0.0" />
   
   <Properties>
-    <DisplayName>Lively Wallpaper</DisplayName>
-    <PublisherDisplayName>rocksdanister</PublisherDisplayName>
+    <DisplayName>Vibe Loop</DisplayName>
+    <PublisherDisplayName>Vibe Loop</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -33,15 +34,15 @@
 
   <Applications>
     <Application Id="App" 
-      Executable="Build\Lively.exe"
+      Executable="Build\VibeLoop.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Lively Wallpaper"
-        Description="Free and open-source software that allows users to set animated and interactive desktop wallpapers."
+        DisplayName="Vibe Loop"
+        Description="Make your screen come alive. Animated and interactive desktop wallpapers, based on Lively Wallpaper (GPL-3.0)."
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png" ShortName="Lively Wallpaper">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png" ShortName="Vibe Loop">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo"/>
             <uap:ShowOn Tile="wide310x150Logo"/>
@@ -51,8 +52,8 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
       <Extensions>
-        <desktop:Extension Category="windows.startupTask" Executable="Build\Lively.exe" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="AppStartup" Enabled="false" DisplayName="Lively Wallpaper" />
+        <desktop:Extension Category="windows.startupTask" Executable="Build\VibeLoop.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="AppStartup" Enabled="false" DisplayName="Vibe Loop" />
         </desktop:Extension>
       </Extensions>
     </Application>

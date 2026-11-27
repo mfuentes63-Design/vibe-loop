@@ -192,7 +192,8 @@ namespace Lively.Models
             TileSize = 1;
             DisplayIdentification = DisplayIdentificationMode.deviceId;
             UIMode = LivelyGUIState.normal;
-            WallpaperDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lively Wallpaper", "Library");
+            // Vibe Loop: must match Lively.Common.Constants.ApplicationType.Name (not referenced here to avoid a project cycle).
+            WallpaperDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Vibe Loop", "Library");
             WallpaperDirMoveExistingWallpaperNewDir = true;
             SysTrayIcon = true;
             WebDebugPort = string.Empty;
@@ -207,7 +208,8 @@ namespace Lively.Models
             CefDiskCache = false;
             DebugMenu = false;
             IsBetaOptIn = false;
-            ApplicationTheme = AppTheme.Dark;
+            // Vibe Loop design direction: bright/playful, not dark by default (upstream default: Dark).
+            ApplicationTheme = AppTheme.Light;
             RemoteDesktopPause = AppRules.pause;
             PowerSaveModePause = AppRules.ignore;
             LockScreenAutoWallpaper = false;

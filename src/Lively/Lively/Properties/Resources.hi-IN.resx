@@ -213,24 +213,24 @@ OLED, प्लाज्मा या CRT डिस्प्ले के लि
     <value>Developer के लिए कॉफी खरीदकर समर्थन दिखाएं।</value>
   </data>
   <data name="DescSwitchBranchBetaWarning" xml:space="preserve">
-    <value>आप Lively के Beta Build में बदलने वाले हैं।
+    <value>आप Vibe Loop के Beta Build में बदलने वाले हैं।
 अपडेट लगातार होंगे और इसमें गलतियाँ (Bugs) भी हो सकती हैं!</value>
   </data>
   <data name="HideSysTray.Description" xml:space="preserve">
-    <value>Syste-tray icon visibility (दृश्यता), Lively छिपाकर पिछे चलता रहेगा।</value>
+    <value>Syste-tray icon visibility (दृश्यता), Vibe Loop छिपाकर पिछे चलता रहेगा।</value>
   </data>
   <data name="HideSysTray.Header" xml:space="preserve">
     <value>सिस्टम ट्रे आइकन</value>
   </data>
   <data name="Language.Description" xml:space="preserve">
-    <value>नई भाषा को लागू करने के लिए Lively पुनः आरंभ करेगा</value>
+    <value>नई भाषा को लागू करने के लिए Vibe Loop पुनः आरंभ करेगा</value>
   </data>
   <data name="Language.Header" xml:space="preserve">
     <value>भाषा</value>
   </data>
   <data name="LivelyExceptionAppUpdateFail" xml:space="preserve">
     <value>अपडेट नहीं हो सका; कृपया इस इंस्टॉलर को यहाँ से डाउनलोड करने का प्रयास करें:
-https://github.com/rocksdanister/lively/releases</value>
+https://github.com/mfuentes63-Design/vibe-loop/releases</value>
   </data>
   <data name="LivelyExceptionDamagedZipFile" xml:space="preserve">
     <value>यह एक ख़राब wallpaper फ़ाइल है इसे फिर से डाउनलोड करने का प्रयास करें।</value>

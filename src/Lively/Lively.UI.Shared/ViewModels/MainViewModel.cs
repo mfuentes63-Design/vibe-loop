@@ -207,7 +207,9 @@ namespace Lively.UI.Shared.ViewModels
                 if (IsSettingsPage)
                     return;
 
-                MenuItems.First(x => x.PageType == ContentPageType.appupdate).IsAlert = IsUpdateAvailable;
+                var updateMenuItem = MenuItems.FirstOrDefault(x => x.PageType == ContentPageType.appupdate);
+                if (updateMenuItem is not null)
+                    updateMenuItem.IsAlert = IsUpdateAvailable;
             });
         }
 
@@ -515,6 +517,10 @@ namespace Lively.UI.Shared.ViewModels
 
         private async Task GalleryInit()
         {
+            // Vibe Loop: upstream gallery service disabled, don't contact api.livelywallpaper.net.
+            if (!Constants.Features.IsGalleryEnabled)
+                return;
+
             try
             {
                 await galleryClient.InitializeAsync();
@@ -572,7 +578,7 @@ namespace Lively.UI.Shared.ViewModels
 
         private MainNavigationItem[] GetPages()
         {
-            return [
+            MainNavigationItem[] pages = [
                 new() { Name = GetPageName(ContentPageType.library), Glyph = "\uE8A9", PageType = ContentPageType.library},
                 new() { Name = GetPageName(ContentPageType.gallery), Glyph = "\uE719", PageType = ContentPageType.gallery },
                 new()
@@ -589,6 +595,11 @@ namespace Lively.UI.Shared.ViewModels
                 new() { Name = GetPageName(ContentPageType.settingsScreensaver), PageType = ContentPageType.settingsScreensaver },
                 new() { Name = GetPageName(ContentPageType.settingsSystem), PageType = ContentPageType.settingsSystem }
             ];
+
+            // Vibe Loop: hide pages backed by disabled upstream services.
+            return pages.Where(x =>
+                (x.PageType != ContentPageType.gallery || Constants.Features.IsGalleryEnabled) &&
+                (x.PageType != ContentPageType.appupdate || Constants.Features.IsAppUpdateCheckEnabled)).ToArray();
         }
 
         private string GetSearchPlaceholderText() => i18n.GetString("SearchBox/PlaceholderText");

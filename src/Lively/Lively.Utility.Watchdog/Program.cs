@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -51,6 +52,10 @@ namespace Lively.Utility.Watchdog
                 return;
             }
 
+            // Vibe Loop: remember where the core is installed so that only *this* installation's UI is terminated below.
+            // Path must be captured while the parent is still alive.
+            var coreDirectory = GetProcessDirectory(parentProcess.Id);
+
             StdInListener();
             parentProcess.WaitForExit();
 
@@ -63,11 +68,14 @@ namespace Lively.Utility.Watchdog
                 catch { }
             }
 
+            // Upstream killed every process named "Lively.UI.WinUI" system-wide, which would also close the UI of a
+            // separately installed Lively Wallpaper (same UI executable name). Restrict to UI processes belonging to this install.
             foreach (var item in Process.GetProcessesByName("Lively.UI.WinUI"))
             {
                 try
                 {
-                    item.Kill();
+                    if (IsSameInstallation(coreDirectory, GetProcessDirectory(item.Id)))
+                        item.Kill();
                 }
                 catch { }
             }
@@ -113,6 +121,58 @@ namespace Lively.Utility.Watchdog
             }
             catch { }
         }
+
+        /// <summary>
+        /// UI lives in "&lt;core&gt;\plugins\UI" (installer build) or in the parent folder of the core (MSIX build: core in "Build\").
+        /// </summary>
+        private static bool IsSameInstallation(string coreDirectory, string uiDirectory)
+        {
+            if (string.IsNullOrEmpty(coreDirectory) || string.IsNullOrEmpty(uiDirectory))
+                return false;
+
+            var core = coreDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            var ui = uiDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            var coreParent = Path.GetDirectoryName(coreDirectory.TrimEnd(Path.DirectorySeparatorChar));
+            return ui.StartsWith(core, StringComparison.OrdinalIgnoreCase) ||
+                (coreParent != null && string.Equals(ui, coreParent.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string GetProcessDirectory(int processId)
+        {
+            var handle = IntPtr.Zero;
+            try
+            {
+                handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
+                if (handle == IntPtr.Zero)
+                    return null;
+
+                var buffer = new StringBuilder(1024);
+                var size = buffer.Capacity;
+                return QueryFullProcessImageName(handle, 0, buffer, ref size) ? Path.GetDirectoryName(buffer.ToString()) : null;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                if (handle != IntPtr.Zero)
+                    CloseHandle(handle);
+            }
+        }
+
+        private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, StringBuilder lpExeName, ref int lpdwSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.I4)]

@@ -69,7 +69,7 @@ namespace Lively.Services
             notifyIcon.DoubleClick += (s, args) => runner.ShowUI();
             notifyIcon.ContextMenuStrip = new ContextMenuStrip();
             notifyIcon.Icon = appIcon;
-            notifyIcon.Text = "Lively Wallpaper";
+            notifyIcon.Text = Constants.ApplicationType.Name;
             notifyIcon.Visible = userSettings.Settings.SysTrayIcon;
             var toolStripColor = Color.FromArgb(55, 55, 55);
             notifyIcon.ContextMenuStrip = new ContextMenuStrip
@@ -115,8 +115,8 @@ namespace Lively.Services
             notifyIcon.ContextMenuStrip.Items.Add(customiseWallpaperMenu);
             trayMenuItems[TrayMenuItem.customiseWallpaper] = customiseWallpaperMenu;
 
-            // Update check, only create on installer build.
-            if (!PackageUtil.IsRunningAsPackaged)
+            // Update check, only create on installer build (and when the fork's update check is enabled).
+            if (!PackageUtil.IsRunningAsPackaged && Constants.Features.IsAppUpdateCheckEnabled)
             {
                 var updateTrayMenu = new ToolStripMenuItem(GetMenuItemString(TrayMenuItem.updateApp), null)
                 {

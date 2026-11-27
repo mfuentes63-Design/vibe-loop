@@ -68,6 +68,10 @@ namespace Lively.Common.Services
             if (PackageUtil.IsRunningAsPackaged || BuildInfoUtil.IsDebugBuild())
                 return AppUpdateStatus.notchecked;
 
+            // Vibe Loop: updates disabled until the fork publishes its own releases (never offer the upstream installer).
+            if (!Constants.Features.IsAppUpdateCheckEnabled)
+                return AppUpdateStatus.notchecked;
+
             try
             {
                 await Task.Delay(fetchDelay);
@@ -110,21 +114,22 @@ namespace Lively.Common.Services
 
         public async Task<(Uri Url, string FileName, Version AppVersion)> GetLatestRelease(bool isBeta)
         {
-            var userName = "rocksdanister";
-            var repositoryName = isBeta ? "lively-beta" : "lively";
+            // Vibe Loop: fork releases only (no separate beta repository).
+            var userName = "mfuentes63-Design";
+            var repositoryName = "vibe-loop";
             var gitRelease = await GithubUtil.GetLatestRelease(userName, repositoryName);
             Version version = GithubUtil.GetVersion(gitRelease);
 
             // Get latest installer file
             var arch = GetArchSetupString(ProcessArch);
-            // Format: lively_setup_ARCH_full_vXXXX.exe, XXXX - 4 digit version no and ARCH - x86, arm64
-            var (fileName, url) = GithubUtil.GetAssetUrl(gitRelease, $"lively_setup_{arch}_full");
+            // Format: vibeloop_setup_ARCH_full_vXXXX.exe, XXXX - 4 digit version no and ARCH - x86, arm64 (see src/installer OutputBaseFilename)
+            var (fileName, url) = GithubUtil.GetAssetUrl(gitRelease, $"vibeloop_setup_{arch}_full");
             if (fileName == null && ProcessArch == Architecture.X64)
             {
                 // Fallback, old updater has hardcoded arch value so for backward compatibility initially x64 setup will be named x86.
                 // In the future make an x86 installer that downloads x64 installer and installs.
                 // Lively v2.1 onwards only x64 version is available.
-                (fileName, url) = GithubUtil.GetAssetUrl(gitRelease, $"lively_setup_x86_full");
+                (fileName, url) = GithubUtil.GetAssetUrl(gitRelease, $"vibeloop_setup_x86_full");
             }
 
             return (url is null ? null : new Uri(url), fileName, version);

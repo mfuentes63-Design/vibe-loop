@@ -21,9 +21,13 @@ namespace Lively.Utility.Screensaver
             if (IsSystemLocked())
                 return;
 
-            var mutexName = "LIVELY:DESKTOPWALLPAPERSYSTEM";
-            var installerGuid = "{E3E43E1B-DEC8-44BF-84A6-243DBA3F2CB1}";
-            var packageFamilyName = "12030rocksdanister.LivelyWallpaper_97hta09mmv6hy";
+            // Vibe Loop identity. This launcher has no project references (kept tiny), so the values are duplicated here.
+            // mutexName: Lively.Common.Constants.SingleInstance.UniqueAppName
+            // installerGuid: AppId in src/installer/Script*.iss (registry key is "{GUID}}_is1", see TryGetInnoInstalledAppPath)
+            // packageFamilyName: Identity Name + PublisherId of "CN=VibeLoop" in Lively.UI.WinUI/Package.appxmanifest
+            var mutexName = "VIBELOOP:DESKTOPWALLPAPERSYSTEM";
+            var installerGuid = "{93A384C2-FB92-4015-BFC7-AEDE5495C2C0}";
+            var packageFamilyName = "VibeLoop_srh4j84q0xahy";
             var appUserModelId = $"{packageFamilyName}!App";
             var isRunning = IsAppMutexRunning(mutexName);
             var (option, hwnd) = ParseScreensaverArgs(args);
@@ -43,7 +47,7 @@ namespace Lively.Utility.Screensaver
             // If app is already running will forward the message to running instance via ipc, otherwise starts in exclusive screensaver mode.
             if (TryGetInnoInstalledAppPath(installerGuid, out string installedPath))
             {
-                Process.Start(Path.Combine(installedPath, "Lively.exe"), startArgs);
+                Process.Start(Path.Combine(installedPath, "VibeLoop.exe"), startArgs);
             }
             else
             {

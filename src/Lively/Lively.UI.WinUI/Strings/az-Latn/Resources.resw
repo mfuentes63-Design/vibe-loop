@@ -136,15 +136,15 @@
     <value>API sənədləşdirmə və kömək</value>
   </data>
   <data name="DescExplorerCrash" xml:space="preserve">
-    <value>Lively ciddi bir xəta ilə qarşılaşdı.
+    <value>Vibe Loop ciddi bir xəta ilə qarşılaşdı.
 
-Windows Explorer son 30 saniyədə iki dəfə yenidən başladıldı! Bu, Lively ilə digər masaüstü özəlləşdirmə yazılımı və ya Windows arasındakı ziddiyətə görə ola bilər. Daha çox problemi önləmək üçün bütün divar kağızları sonlandırıldı.</value>
+Windows Explorer son 30 saniyədə iki dəfə yenidən başladıldı! Bu, Vibe Loop ilə digər masaüstü özəlləşdirmə yazılımı və ya Windows arasındakı ziddiyətə görə ola bilər. Daha çox problemi önləmək üçün bütün divar kağızları sonlandırıldı.</value>
   </data>
   <data name="DescIncompatibleTaskbarTheme" xml:space="preserve">
     <value>Uyumsuz proqram tapıldı, tapşırıq çubuğu teması sıradan çıxarıldı</value>
   </data>
   <data name="Website.Description" xml:space="preserve">
-    <value>Lively Wallpaper - rəsmi internet səhifəsi</value>
+    <value>Vibe Loop - rəsmi internet səhifəsi</value>
   </data>
   <data name="DescOledScreensaverNotice" xml:space="preserve">
     <value>Əksər müasir LCD və LED ekranlar (burn-in) yanma problemi yaşamır və buna görə də istənilən divar kağızı ekran qoruyucu olaraq istifadə edilər bilər.
@@ -180,7 +180,7 @@ Zərərli tətbiqlər zərərli proqram təminatı, virus ehtiva edə və sistem
 Yalnız güvənli mənbədən gələn tətbiqlə davam edin.</value>
   </data>
   <data name="MinimizedTray.Text" xml:space="preserve">
-    <value>Lively, bildiriş sahəsinə kiçildildi, davam etmək üçün Lively nişanına sağ klikləyin.</value>
+    <value>Vibe Loop, bildiriş sahəsinə kiçildildi, davam etmək üçün Vibe Loop nişanına sağ klikləyin.</value>
   </data>
   <data name="DescriptionPleaseRestartLively" xml:space="preserve">
     <value>Ayarların qüvvəyə minməsi üçün Lively-ni yenidən başladın</value>
@@ -217,20 +217,20 @@ Yalnız güvənli mənbədən gələn tətbiqlə davam edin.</value>
 Güncəlləmələr tez-tez gələcək və xətalar ehtiva edə bilər!</value>
   </data>
   <data name="HideSysTray.Description" xml:space="preserve">
-    <value>Bildiriş sahəsinə nişan görünməsi, Lively, nişan gizli olduqda işləməyə davam edəcək</value>
+    <value>Bildiriş sahəsinə nişan görünməsi, Vibe Loop, nişan gizli olduqda işləməyə davam edəcək</value>
   </data>
   <data name="HideSysTray.Header" xml:space="preserve">
     <value>Bildiriş sahəsi nişanı</value>
   </data>
   <data name="Language.Description" xml:space="preserve">
-    <value>Lively, yeni dili tətbiq etmək üçün yenidən başladılacaq</value>
+    <value>Vibe Loop, yeni dili tətbiq etmək üçün yenidən başladılacaq</value>
   </data>
   <data name="Language.Header" xml:space="preserve">
     <value>Dil</value>
   </data>
   <data name="LivelyExceptionAppUpdateFail" xml:space="preserve">
     <value>Güncəllənmədi; aşağıdakı keçidi istifadə edərək endirin:
-https://github.com/rocksdanister/lively/releases</value>
+https://github.com/mfuentes63-Design/vibe-loop/releases</value>
   </data>
   <data name="LivelyExceptionDamagedZipFile" xml:space="preserve">
     <value>Divar kağızı faylı zədələnib, yenidən endirməyə çalışın</value>
@@ -242,7 +242,7 @@ Jurnal faylını paylaşmaq üçün təlimatlar bu keçiddədir:
 https://github.com/rocksdanister/lively/wiki</value>
   </data>
   <data name="LivelyExceptionHighContrastMode" xml:space="preserve">
-    <value>Windows Yüksək Kontrast rejimi fəal olduqda Lively düzgü işləyə bilmir!
+    <value>Windows Yüksək Kontrast rejimi fəal olduqda Vibe Loop düzgü işləyə bilmir!
 Yüksək Kontrast rejimini sıradan çıxardıb yenidən sınayın</value>
   </data>
   <data name="LivelyExceptionMediaPlayback" xml:space="preserve">
@@ -257,7 +257,7 @@ https://github.com/rocksdanister/lively/wiki</value>
     <value>Lively divar kağızı faylı deyil</value>
   </data>
   <data name="LivelyExceptionSafeModeStart" xml:space="preserve">
-    <value>Lively düzgün bağlanılmadı, güvənli rejimdə başladılır.
+    <value>Vibe Loop düzgün bağlanılmadı, güvənli rejimdə başladılır.
 Daha əvvəl işləyən divar kağızını bərpa etmək istəyirsiniz?</value>
   </data>
   <data name="LivelyExceptionWorkerWSetupFail" xml:space="preserve">
@@ -272,7 +272,7 @@ Windows 7 təzəlikcə qurulubsa - Ən yaxşı görünüş üçün ayarlar və T
 (Bəzi Windows 10 quruluşlarında işləməyə bilər)</value>
   </data>
   <data name="Startup.Description" xml:space="preserve">
-    <value>Divar kağızı oxutmaq üçün Lively arxaplanda işləməlidir</value>
+    <value>Divar kağızı oxutmaq üçün Vibe Loop arxaplanda işləməlidir</value>
   </data>
   <data name="Startup.Header" xml:space="preserve">
     <value>Sistem açılanda başlat</value>
@@ -614,7 +614,7 @@ Windows 7 təzəlikcə qurulubsa - Ən yaxşı görünüş üçün ayarlar və T
     <value>Bu tətbiqləri işə salarkən divar kağızına fasilə ver</value>
   </data>
   <data name="TipAppTheme" xml:space="preserve">
-    <value>Lively, görünüşü dəyişdirmək üçün sistemin tema ayarlarına uyğunlaşır</value>
+    <value>Vibe Loop, görünüşü dəyişdirmək üçün sistemin tema ayarlarına uyğunlaşır</value>
   </data>
   <data name="BatteryPower.Description" xml:space="preserve">
     <value>Adapter çıxarıldıqda oxutmanı dəyişdir</value>
@@ -710,7 +710,7 @@ Windows 7 təzəlikcə qurulubsa - Ən yaxşı görünüş üçün ayarlar və T
     <value>Tam ekran tətbiqlər</value>
   </data>
   <data name="TitleAppName" xml:space="preserve">
-    <value>Lively divar kağızı</value>
+    <value>Vibe Loop divar kağızı</value>
   </data>
   <data name="AppRules.Header" xml:space="preserve">
     <value>Tətbiq qaydaları</value>
@@ -773,7 +773,7 @@ Windows 7 təzəlikcə qurulubsa - Ən yaxşı görünüş üçün ayarlar və T
     <value>Kitabxana</value>
   </data>
   <data name="TitleLivelySetup" xml:space="preserve">
-    <value>Lively Quraşdırması</value>
+    <value>Vibe Loop Quraşdırması</value>
   </data>
   <data name="TitleLocation" xml:space="preserve">
     <value>Yerləşmə</value>

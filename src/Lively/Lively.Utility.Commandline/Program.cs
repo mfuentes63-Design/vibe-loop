@@ -26,7 +26,7 @@ namespace Lively.Utility.Commandline
 
             if (!AppLifeCycleUtil.IsAppMutexRunning(SingleInstance.UniqueAppName))
             {
-                Console.WriteLine("\nWARNING: Lively core is currently not running!");
+                Console.WriteLine($"\nWARNING: {ApplicationType.Name} core is currently not running!");
             }
             else
             {

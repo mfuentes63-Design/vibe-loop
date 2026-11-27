@@ -1,0 +1,146 @@
+# Vibe Loop - Windows build validation.
+#
+# What this proves: the Release|x64 solution restores and COMPILES on a clean Windows runner.
+# What this does NOT prove: that Vibe Loop runs. The runnable layout additionally needs the external
+# runtime assets that are not in the repository (Plugins\ - mpv, CEF/WebView2 players, watchdog, UI -
+# and Bundle\ starter wallpapers), the Inno Setup installer is not built, and nothing is executed.
+
+name: Windows build validation
+
+on:
+  push:
+    branches:
+      - "feat/**"
+      - "dev/**"
+  pull_request:
+    branches:
+      - "dev/personal-screensaver"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOLUTION: src/Lively/VibeLoop.sln
+  CONFIGURATION: Release
+  PLATFORM: x64
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build:
+    name: Compile Release x64
+    # Same toolset family as the owner's local Visual Studio 2022 build.
+    runs-on: windows-2022
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Setup MSBuild (Visual Studio 2022)
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Identity guard (no upstream runtime identifiers)
+        shell: pwsh
+        run: |
+          # Fails if the upstream single-instance mutex or installer AppId is used as a value anywhere in source.
+          $patterns = @('"LIVELY:DESKTOPWALLPAPERSYSTEM"', 'AppMutex=LIVELY:', 'AppId={{E3E43E1B', '"12030rocksdanister.LivelyWallpaper')
+          $hits = Get-ChildItem -Path src -Recurse -File -Include *.cs,*.iss,*.appxmanifest,*.csproj |
+            Select-String -SimpleMatch -Pattern $patterns
+          if ($hits) { $hits | ForEach-Object { Write-Host "::error file=$($_.Path),line=$($_.LineNumber)::Upstream identifier: $($_.Line.Trim())" }; exit 1 }
+          Write-Host "No upstream runtime identifiers found."
+
+      - name: Restore and build (${{ env.CONFIGURATION }}|${{ env.PLATFORM }})
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/logs | Out-Null
+          msbuild $env:SOLUTION -restore -m -nologo `
+            -p:Configuration=$env:CONFIGURATION -p:Platform=$env:PLATFORM `
+            -bl:artifacts/logs/build.binlog `
+            "-flp:logfile=artifacts/logs/build.log;verbosity=normal" `
+            "-flp1:logfile=artifacts/logs/warnings.log;warningsonly" `
+            "-flp2:logfile=artifacts/logs/errors.log;errorsonly"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: NuGet vulnerability report (informational)
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/logs | Out-Null
+          # Non-SDK-style projects may not be supported by 'dotnet list package'; the restore warnings (NU190x/NU1605)
+          # in warnings.log are the authoritative record.
+          dotnet list $env:SOLUTION package --vulnerable --include-transitive 2>&1 | Tee-Object -FilePath artifacts/logs/nuget-vulnerable.txt
+
+      - name: Inventory compiled outputs
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/logs | Out-Null
+          $outputs = Get-ChildItem -Path src/Lively -Recurse -File -Include *.exe,*.scr |
+            Where-Object { $_.FullName -match '\\bin\\' -and $_.FullName -match '\\Release\\' } |
+            ForEach-Object { $_.FullName.Substring((Get-Location).Path.Length + 1) }
+          $outputs | Set-Content artifacts/logs/compiled-outputs.txt
+          $outputs
+          $expected = @('VibeLoop.exe', 'VibeLoop.Screensaver.exe', 'VibeLoop.scr', 'Lively.UI.WinUI.exe')
+          $missing = $expected | Where-Object { $name = $_; -not ($outputs | Where-Object { (Split-Path $_ -Leaf) -eq $name }) }
+          if ($missing) { Write-Host "::warning::Expected outputs not found: $($missing -join ', ')" }
+
+      - name: Job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $warn = if (Test-Path artifacts/logs/warnings.log) { Get-Content artifacts/logs/warnings.log } else { @() }
+          $err  = if (Test-Path artifacts/logs/errors.log)   { Get-Content artifacts/logs/errors.log }   else { @() }
+          $nuget = $warn | Select-String -Pattern 'warning NU\d{4}' | ForEach-Object { $_.Line.Trim() } | Sort-Object -Unique
+          @(
+            "## Vibe Loop build validation ($env:CONFIGURATION|$env:PLATFORM)"
+            ""
+            "**Compilation only.** A successful run means the solution compiles. It does not mean Vibe Loop runs:"
+            "``Plugins\`` / ``Bundle\`` runtime assets are not in the repo, the installer is not built, and nothing is executed."
+            ""
+            "- Errors: $($err.Count)"
+            "- Warning lines: $($warn.Count)"
+            ""
+            "### NuGet warnings (recorded, not suppressed)"
+            ""
+            '```'
+            ($nuget | Select-Object -First 50)
+            '```'
+          ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: artifacts/logs/
+          retention-days: 14
+
+      - name: Upload compiled core and screensaver (not a runnable package)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-output-NOT-a-runnable-package
+          path: |
+            src/Lively/Lively/bin/**/Release/**
+            src/Lively/Lively.Utility.Screensaver/bin/**/Release/**
+          retention-days: 7

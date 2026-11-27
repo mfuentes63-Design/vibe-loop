@@ -23,8 +23,8 @@ namespace Lively.Common
             public static string MusicAppExclusionRulesPath { get; } = Path.Combine(AppDataDir, "MusicAppExclusionRules.json");
             public static string WeatherSettingsPath { get; } = Path.Combine(AppDataDir, "WeatherSettings.json");
             public static string ThemeDir { get; } = Path.Combine(AppDataDir, "Themes");
-            public static string ThemeCacheDir { get; } = Path.Combine(Path.GetTempPath(), "Lively Wallpaper", "themes");
-            public static string CefRootCacheDir { get; } = Path.Combine(Path.GetTempPath(), "Lively Wallpaper", "CEF");
+            public static string ThemeCacheDir { get; } = Path.Combine(Path.GetTempPath(), ApplicationType.Name, "themes");
+            public static string CefRootCacheDir { get; } = Path.Combine(Path.GetTempPath(), ApplicationType.Name, "CEF");
             public static string TokensPath { get; } = Path.Combine(AppDataDir, "Tokens.dat");
             public static string ScreenshotDir { get; } = Path.Combine(AppDataDir, "Screenshots");
         }
@@ -70,15 +70,43 @@ namespace Lively.Common
 
         public static class SingleInstance
         {
-            public static string UniqueAppName { get; } = "LIVELY:DESKTOPWALLPAPERSYSTEM";
+            // Vibe Loop: must differ from upstream Lively (LIVELY:DESKTOPWALLPAPERSYSTEM) so both apps can run side by side.
+            // Also used as: gRPC/legacy pipe name prefix, DPAPI entropy for Tokens.dat, installer AppMutex, screensaver launcher.
+            // Keep in sync with Lively.Utility.Screensaver/Program.cs and src/installer/Script*.iss (AppMutex).
+            public static string UniqueAppName { get; } = "VIBELOOP:DESKTOPWALLPAPERSYSTEM";
             public static string PipeServerName { get; } = UniqueAppName + Environment.UserName; //backward compatibility < v1.9
             public static string GrpcPipeServerName { get; } = "Grpc_" + PipeServerName;
         }
         
         public static class ApplicationType
         {
-            public static string Name { get; } = "Lively Wallpaper";
+            // Vibe Loop: display name and storage folder name (%LOCALAPPDATA%\Vibe Loop, %TEMP%\Vibe Loop).
+            // Keep in sync with Lively.Models/SettingsModel.cs (default WallpaperDir), Nlog.config files and src/installer/Script*.iss.
+            public static string Name { get; } = "Vibe Loop";
+            public static string Tagline { get; } = "Make your screen come alive.";
+            public static string RepositoryUrl { get; } = "https://github.com/mfuentes63-Design/vibe-loop";
+            public static string UpstreamName { get; } = "Lively Wallpaper";
+            public static string UpstreamRepositoryUrl { get; } = "https://github.com/rocksdanister/lively";
             public static bool IsTestBuild { get; } = false;
+        }
+
+        /// <summary>
+        /// Vibe Loop: switches for upstream-owned online services.
+        /// Both services are operated by the Lively Wallpaper project (GitHub releases of rocksdanister/lively and
+        /// api.livelywallpaper.net with upstream OAuth client IDs) and are therefore disabled in this fork.
+        /// </summary>
+        public static class Features
+        {
+            /// <summary>
+            /// Periodic/automatic update check. When enabled, checks the fork's GitHub releases (see GithubUpdaterService),
+            /// never the upstream Lively installer.
+            /// </summary>
+            public static bool IsAppUpdateCheckEnabled { get; } = false;
+
+            /// <summary>
+            /// Lively online gallery (browse, login, subscribe, share/upload, restore).
+            /// </summary>
+            public static bool IsGalleryEnabled { get; } = false;
         }
 
         public static class Weather
