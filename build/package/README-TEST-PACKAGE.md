@@ -14,6 +14,8 @@
 - `tools\Get-VibeLoopTestState.ps1` takes a **read-only** snapshot of startup entries, screensaver and wallpaper settings, app-data folders, processes, pipes and mutexes, so you can compare before and after a test.
 - `docs\WINDOWS_RUNTIME_TEST_PLAN.md` is the step-by-step test plan. Start there.
 - `PACKAGE-INFO.json` records the commit, the CI run, component versions and the pinned third-party runtimes.
+- `VERIFICATION.json` records the static checks CI ran: required files, x64 headers, process names, the UI resource index, and the problems found (must be empty).
+- The UI runs as `VibeLoop.UI.exe`, which never collides with Lively Wallpaper's `Lively.UI.WinUI.exe`.
 - `MANIFEST.sha256` lists a hash for every file. Licences and third-party notices are in `licenses\`.
 
 ## What this is not

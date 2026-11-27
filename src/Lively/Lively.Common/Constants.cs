@@ -84,7 +84,7 @@ namespace Lively.Common
             // Keep in sync with Lively.Models/SettingsModel.cs (default WallpaperDir), Nlog.config files and src/installer/Script*.iss.
             public static string Name { get; } = "Vibe Loop";
             public static string Tagline { get; } = "Make your screen come alive.";
-            // Vibe Loop: UI executable (AssemblyName of Lively.UI.WinUI.csproj). Must not be "Lively.UI.WinUI.exe": upstream
+            // Vibe Loop: UI executable (AssemblyName of Lively.UI.WinUI.csproj). Must differ from upstream Lively's UI exe name:
             // Lively's watchdog terminates all processes with that name. Keep in sync with Lively.Utility.Watchdog/Program.cs.
             public static string UiExecutableName { get; } = "VibeLoop.UI.exe";
             public static string UiProcessName { get; } = "VibeLoop.UI";

@@ -69,12 +69,18 @@ jobs:
       - name: Identity guard (no upstream runtime identifiers)
         shell: pwsh
         run: |
-          # Fails if the upstream single-instance mutex or installer AppId is used as a value anywhere in source.
-          $patterns = @('"LIVELY:DESKTOPWALLPAPERSYSTEM"', 'AppMutex=LIVELY:', 'AppId={{E3E43E1B', '"12030rocksdanister.LivelyWallpaper')
+          # Fails if an upstream runtime identifier is used as a value anywhere in source: single-instance mutex,
+          # installer AppId, Store identity, or the upstream UI executable/process name (upstream Lively's watchdog
+          # kills every process named Lively.UI.WinUI).
+          $patterns = @('"LIVELY:DESKTOPWALLPAPERSYSTEM"', 'AppMutex=LIVELY:', 'AppId={{E3E43E1B', '"12030rocksdanister.LivelyWallpaper',
+                        '"Lively.UI.WinUI.exe"', 'GetProcessesByName("Lively.UI.WinUI")')
           $hits = Get-ChildItem -Path src -Recurse -File -Include *.cs,*.iss,*.appxmanifest,*.csproj |
             Select-String -SimpleMatch -Pattern $patterns
           if ($hits) { $hits | ForEach-Object { Write-Host "::error file=$($_.Path),line=$($_.LineNumber)::Upstream identifier: $($_.Line.Trim())" }; exit 1 }
-          Write-Host "No upstream runtime identifiers found."
+          [xml]$ui = Get-Content src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj -Raw
+          $asm = @($ui.Project.PropertyGroup | ForEach-Object { $_.AssemblyName } | Where-Object { $_ })
+          if ($asm -notcontains 'VibeLoop.UI') { Write-Host "::error file=src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj::UI AssemblyName must be VibeLoop.UI (found: $($asm -join ', '))"; exit 1 }
+          Write-Host "No upstream runtime identifiers found; UI AssemblyName = VibeLoop.UI."
 
       - name: Restore and build (${{ env.CONFIGURATION }}|${{ env.PLATFORM }})
         shell: pwsh
@@ -100,6 +106,28 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}   # read-only GitHub API access to resolve pinned third-party release assets
         run: pwsh -NoProfile -File build/package/New-VibeLoopTestPackage.ps1 -OutputDirectory artifacts/package -Configuration $env:CONFIGURATION
+
+      - name: Smoke-test the read-only state snapshot tool (pwsh 7 and Windows PowerShell 5.1)
+        if: steps.package.outcome == 'success'
+        shell: pwsh
+        run: |
+          # Runs the tester tool exactly as shipped in the package; it only reads registry/files/processes.
+          $tool = Get-ChildItem artifacts/package -Recurse -Filter Get-VibeLoopTestState.ps1 | Select-Object -First 1
+          if (-not $tool) { Write-Host "::error::Get-VibeLoopTestState.ps1 not found in the package"; exit 1 }
+          $out = New-Item -ItemType Directory -Force -Path artifacts/logs/state-smoke
+          foreach ($shell in 'pwsh', 'powershell') {
+            foreach ($label in 'a', 'b') {
+              & $shell -NoProfile -ExecutionPolicy Bypass -File $tool.FullName -Label "$shell-$label" -OutFile (Join-Path $out "state-$shell-$label.json")
+              if ($LASTEXITCODE -ne 0) { Write-Host "::error::$shell snapshot failed ($LASTEXITCODE)"; exit 1 }
+            }
+            & $shell -NoProfile -ExecutionPolicy Bypass -File $tool.FullName -Compare "$(Join-Path $out "state-$shell-a.json"),$(Join-Path $out "state-$shell-b.json")"
+            if ($LASTEXITCODE -ne 0) { Write-Host "::error::$shell compare failed ($LASTEXITCODE)"; exit 1 }
+            $j = Get-Content (Join-Path $out "state-$shell-a.json") -Raw | ConvertFrom-Json
+            foreach ($k in 'startupRun', 'screensaver', 'wallpaper', 'folders', 'appData', 'uninstall', 'mutexes') {
+              if (-not $j.PSObject.Properties[$k]) { Write-Host "::error::$shell snapshot is missing section '$k'"; exit 1 }
+            }
+          }
+          Write-Host "State snapshot tool OK in pwsh and Windows PowerShell."
 
       - name: Job summary
         if: always()

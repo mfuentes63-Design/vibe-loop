@@ -308,7 +308,7 @@ Write-Step 'Verifying layout'
 $required = @(
     'app/VibeLoop.exe', 'app/VibeLoop.dll', 'app/Nlog.config', 'app/Assets/Plugins/Mpv/LivelyProperties.json',
     'app/VibeLoop.scr', 'app/VibeLoop.Screensaver.exe',
-    'app/plugins/UI/Lively.UI.WinUI.exe', 'app/plugins/UI/Nlog.config',
+    'app/plugins/UI/VibeLoop.UI.exe', 'app/plugins/UI/VibeLoop.UI.dll', 'app/plugins/UI/resources.pri', 'app/plugins/UI/Nlog.config',
     'app/plugins/cef/Lively.Player.CefSharp.exe', 'app/plugins/cef/CefSharp.BrowserSubprocess.exe', 'app/plugins/cef/libcef.dll',
     'app/plugins/webview2/Lively.Player.WebView2.exe', 'app/plugins/webview2/Microsoft.Web.WebView2.Core.dll',
     'app/plugins/wmf/Lively.PlayerWmf.exe',
@@ -331,7 +331,7 @@ foreach ($pair in @(@('app/plugins/webview2', 'WebView2Loader.dll'), @('app/plug
     }
 }
 # Architecture of the native entry points.
-foreach ($exe in 'app/VibeLoop.exe', 'app/plugins/UI/Lively.UI.WinUI.exe', 'app/plugins/mpv/mpv.exe', 'app/plugins/cef/CefSharp.BrowserSubprocess.exe') {
+foreach ($exe in 'app/VibeLoop.exe', 'app/plugins/UI/VibeLoop.UI.exe', 'app/plugins/mpv/mpv.exe', 'app/plugins/cef/CefSharp.BrowserSubprocess.exe') {
     $p = Join-Path $root $exe
     if (Test-Path $p) { $m = Get-PEMachine $p; if ($m -ne 'x64') { $problems.Add("not x64 ($m): $exe") } }
 }
@@ -339,7 +339,69 @@ foreach ($exe in 'app/VibeLoop.exe', 'app/plugins/UI/Lively.UI.WinUI.exe', 'app/
 foreach ($bad in 'app/Lively.exe', 'app/Lively.dll') { if (Test-Path (Join-Path $root $bad)) { $problems.Add("forbidden (upstream identity): $bad") } }
 $forbidden = @(Get-ChildItem $root -Recurse -File | Where-Object { $_.Name -match '^(unins\d*\.exe|setup.*\.exe|vc_redist.*\.exe|windowsdesktop-runtime.*\.exe)$' })
 foreach ($f in $forbidden) { $problems.Add("forbidden (installer): $($f.FullName.Substring($root.Length + 1))") }
+
+# Process identity: upstream Lively's watchdog kills every process named Lively.UI.WinUI when its core exits
+# (process names Lively targets by NAME). No Vibe Loop executable may use such a name.
+$upstreamKilledByName = @('Lively.UI.WinUI')
+$exeNames = @(Get-ChildItem $root -Recurse -File -Include *.exe, *.scr | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_.Name) } | Sort-Object -Unique)
+foreach ($n in $upstreamKilledByName) { if ($exeNames -contains $n) { $problems.Add("process-name collision with upstream Lively (killed by name by Lively's watchdog): $n.exe") } }
+foreach ($f in @(Get-ChildItem $root -Recurse -File | Where-Object { $_.Name -in 'Lively.UI.WinUI.exe', 'Lively.UI.WinUI.dll' })) {
+    $problems.Add("forbidden (upstream UI identity): $($f.FullName.Substring($root.Length + 1))")
+}
+# Executables that share a name with upstream Lively components. Upstream only terminates these by process ID (its own
+# child processes), never by name, so they cannot be affected by an installed Lively; listed for the record.
+$sharedWithUpstream = @($exeNames | Where-Object { $_ -like 'Lively.*' })
+
+# PRI verification: the UI rename must not change the resource index (x:Uid / ResourceLoader lookups).
+$pri = [ordered]@{}
+$pri['checked'] = $false
+$priFile = Join-Path $plugins 'UI/resources.pri'
+$makepri = $null
+$sdkCandidates = @()
+if ($env:NUGET_PACKAGES) { $sdkCandidates += @(Get-ChildItem (Join-Path $env:NUGET_PACKAGES 'microsoft.windows.sdk.buildtools') -Recurse -Filter makepri.exe -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '[\\/]x64[\\/]' }) }
+$sdkCandidates += @(Get-ChildItem (Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/bin') -Recurse -Filter makepri.exe -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '[\\/]x64[\\/]' })
+if ($sdkCandidates.Count) { $makepri = ($sdkCandidates | Sort-Object FullName -Descending | Select-Object -First 1).FullName }
+if (-not $makepri) { $problems.Add('makepri.exe not found - cannot verify the UI resource index') }
+elseif (Test-Path $priFile) {
+    $dump = Join-Path $logDir 'ui-resources.pri.dump.xml'
+    & $makepri dump /if $priFile /of $dump /dt detailed /o | Out-Null
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $dump)) { $problems.Add("makepri dump failed ($LASTEXITCODE)") }
+    else {
+        $xmlText = Get-Content $dump -Raw
+        $mapNames = @([regex]::Matches($xmlText, '<ResourceMap\s+name="([^"]+)"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+        $hasTitle = $xmlText -match 'name="TitleAppName"'
+        $hasMainWindowXbf = $xmlText -match 'MainWindow\.xbf'
+        $titleValueVibeLoop = $xmlText -match '(?s)name="TitleAppName".{0,1500}?Vibe Loop'
+        $pri = [ordered]@{}
+        $pri['checked'] = $true
+        $pri['tool'] = $makepri
+        $pri['file'] = 'app/plugins/UI/resources.pri'
+        $pri['resourceMaps'] = $mapNames
+        $pri['expectedPrimaryMap'] = 'Lively.UI.WinUI'
+        $pri['hasTitleAppName'] = [bool]$hasTitle
+        $pri['titleAppNameHasVibeLoopValue'] = [bool]$titleValueVibeLoop
+        $pri['hasMainWindowXbf'] = [bool]$hasMainWindowXbf
+        if ($mapNames -notcontains 'Lively.UI.WinUI') { $problems.Add("UI resources.pri primary map changed: found [$($mapNames -join ', ')], expected Lively.UI.WinUI") }
+        if (-not $hasTitle) { $problems.Add('UI resources.pri has no TitleAppName string resource') }
+        if (-not $titleValueVibeLoop) { $problems.Add('UI resources.pri TitleAppName does not contain the value "Vibe Loop"') }
+        if (-not $hasMainWindowXbf) { $problems.Add('UI resources.pri does not index MainWindow.xbf') }
+    }
+}
+
+$verification = [ordered]@{}
+$verification['status'] = 'Static checks only (layout, PE headers, identity, resources). NOT runtime-verified.'
+$verification['requiredFiles'] = $required.Count
+$verification['uiExecutable'] = 'app/plugins/UI/VibeLoop.UI.exe'
+$verification['processNamesInPackage'] = $exeNames
+$verification['upstreamKilledByNameNames'] = $upstreamKilledByName
+$verification['sharedNamesWithUpstreamPidOnly'] = $sharedWithUpstream
+$verification['pri'] = $pri
+$verification['problems'] = @($problems)
+$verification | ConvertTo-Json -Depth 6 | Set-Content -Encoding utf8 (Join-Path $root 'VERIFICATION.json')
+Copy-Item (Join-Path $root 'VERIFICATION.json') (Join-Path $logDir 'test-package-verification.json') -Force
+
 if ($problems.Count) { $problems | ForEach-Object { Write-Host "::error title=Test package layout::$_" }; Fail "Test package verification failed ($($problems.Count) problem(s))." }
+Write-Host "Package verification passed: $($required.Count) required files, PRI maps [$($pri.resourceMaps -join ', ')], process names: $($exeNames -join ', ')"
 
 # ------------------------------------------------------------------ 7. info, manifest, zip
 function Get-FileVer([string] $rel) { $p = Join-Path $root $rel; if (Test-Path $p) { (Get-Item $p).VersionInfo.FileVersion } else { $null } }
@@ -362,7 +424,7 @@ $info = [ordered]@{
     configuration   = "$Configuration|x64; core and UI self-contained win-x64; .NET Framework 4.7.2 components from the solution build"
     components      = [ordered]@{
         core        = Get-FileVer 'app/VibeLoop.exe'
-        ui          = Get-FileVer 'app/plugins/UI/Lively.UI.WinUI.exe'
+        ui          = Get-FileVer 'app/plugins/UI/VibeLoop.UI.exe'
         screensaver = Get-FileVer 'app/VibeLoop.Screensaver.exe'
         cefPlayer   = Get-FileVer 'app/plugins/cef/Lively.Player.CefSharp.exe'
         libcef      = Get-FileVer 'app/plugins/cef/libcef.dll'
