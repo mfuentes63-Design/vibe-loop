@@ -1,0 +1,20 @@
+{
+  "speed": {
+    "type": "slider",
+    "value": 8,
+    "text": "Animation period (s)",
+    "min": 2,
+    "max": 30,
+    "step": 1
+  },
+  "accent": {
+    "type": "color",
+    "value": "#FF3CAC",
+    "text": "Accent color"
+  },
+  "showClock": {
+    "type": "checkbox",
+    "value": true,
+    "text": "Show clock"
+  }
+}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Vibe Loop test web wallpaper</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;font-family:Segoe UI,Arial,sans-serif;color:#fff}
+  #bg{position:fixed;inset:0;background:linear-gradient(120deg,#FF3CAC,#784BA0,#2B86C5,#2BD2C5);
+      background-size:400% 400%;animation:shift var(--speed,8s) ease-in-out infinite}
+  @keyframes shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  #panel{position:fixed;left:4vw;bottom:6vh;padding:16px 22px;border-radius:14px;background:rgba(0,0,0,.28)}
+  #clock{font-size:6vh;font-weight:600}
+  #log{font:12px Consolas,monospace;opacity:.85;white-space:pre}
+</style></head>
+<body><div id="bg"></div>
+<div id="panel"><div id="clock"></div><div>Vibe Loop runtime test &middot; web</div><div id="log">waiting for property events...</div></div>
+<script>
+  const log = document.getElementById('log');
+  function tick(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }
+  setInterval(tick, 1000); tick();
+  // Lively-format property API (kept for compatibility in Vibe Loop).
+  function livelyPropertyListener(name, val){
+    log.textContent = 'property ' + name + ' = ' + JSON.stringify(val);
+    if (name === 'speed') document.getElementById('bg').style.setProperty('--speed', val + 's');
+    if (name === 'accent') document.getElementById('panel').style.borderLeft = '6px solid ' + val;
+    if (name === 'showClock') document.getElementById('clock').style.display = val ? 'block' : 'none';
+  }
+  function livelyWallpaperPlaybackChanged(data){ log.textContent = 'playback ' + data; }
+</script></body></html>
