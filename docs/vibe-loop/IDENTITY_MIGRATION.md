@@ -172,16 +172,17 @@ Compile risks to look at first if CI fails:
 - `Lively.UI.Shared/ViewModels/MainViewModel.cs`: the `GetPages()` filter (C# 12 collection expression assigned to an array).
 - `Lively.Utility.Watchdog/Program.cs`: new P/Invoke helpers (C# 7.3).
 
-### NuGet warnings recorded (not changed, not suppressed)
+### NuGet warnings
 
-| Package | Where | Warning |
-|---|---|---|
-| `Magick.NET-Q8-AnyCPU` 14.9.1 | `Lively/Lively.csproj`, `Lively.ML/Lively.ML.csproj` | Known vulnerability advisories (NU1902/NU1903) reported by the owner's local build. Fix in a separate, dedicated dependency PR |
-| `Newtonsoft.Json` 13.0.3 | `Lively.Player.Wmf/Lively.Player.Wmf.csproj` | Package downgrade (NU1605): `Lively.Common` / `Lively.Models` require 13.0.4 |
-
-The CI job summary lists every `NU####` warning from the restore so they stay visible.
+Remediated in Phase 1B (Magick.NET 14.17.2, Newtonsoft.Json 13.0.4, plus three transitive security pins).
+The audit now covers direct and transitive packages and fails CI on high or critical findings. See
+[DEPENDENCY_SECURITY.md](DEPENDENCY_SECURITY.md).
 
 ## 6. Requires local Windows runtime testing
+
+Phase 1B replaced this checklist with the detailed VM test plan
+[WINDOWS_RUNTIME_TEST_PLAN.md](WINDOWS_RUNTIME_TEST_PLAN.md), which runs against the CI-built test package.
+The list below is kept for reference.
 
 Compilation does not show that any of this works. On a Windows test machine (ideally a VM or a
 separate user account — **not** the owner's daily Windows profile), with a full runtime layout

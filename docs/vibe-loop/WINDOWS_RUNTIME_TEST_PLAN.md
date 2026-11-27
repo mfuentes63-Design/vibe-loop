@@ -1,6 +1,6 @@
 # Vibe Loop — Windows runtime test plan (Phase 1B)
 
-This plan checks that the CI-built **test package** (`VibeLoop-TestPackage-x64-<sha>-NOT-RUNTIME-VERIFIED.zip`, artifact of the *Windows build, audit & test package* workflow) actually runs. It also checks that Vibe Loop stays isolated from an installed Lively Wallpaper. Until every **[GATE]** test passes, the package and the rebrand PR count as *not runtime-verified*.
+This plan checks that the CI-built **test package** (`VibeLoop-TestPackage-x64-<sha>-NOT-RUNTIME-VERIFIED.zip`, about 500 MB, an artifact of the *Windows build, audit & test package* workflow; GitHub keeps it for 14 days, so rerun the workflow for a fresh one) actually runs. It also checks that Vibe Loop stays isolated from an installed Lively Wallpaper. Until every **[GATE]** test passes, the package and the rebrand PR count as *not runtime-verified*.
 
 ## 0. Ground rules (protect the owner's computer)
 
@@ -97,7 +97,7 @@ Evidence for a failure:
 3. Customise: move *Animation period*, change *Accent color*, toggle *Show clock*. **Expected:**
    - the panel text shows `property speed = …` and so on
    - the visuals update right away
-4. *Settings > Wallpaper > Web browser* → **CEF**, then re-apply. **Expected:**
+4. *Settings > Wallpaper > Web browser* → **CEF**, then re-apply. CefSharp 141.0.110 has one open **moderate** advisory (see DEPENDENCY_SECURITY.md), so load only the local test fixture with CEF, not arbitrary websites. **Expected:**
    - `Lively.Player.CefSharp.exe` and `CefSharp.BrowserSubprocess.exe` run
    - the wallpaper renders
    - the CEF cache appears under `%TEMP%\Vibe Loop\CEF\…`; nothing is created under `%TEMP%\Lively Wallpaper`
@@ -195,7 +195,8 @@ Run these from a terminal in `app\`. The `.scr` finds `VibeLoop.exe` next to its
 | WMF and watchdog executables are renamed by the package script (`Lively.Player.Wmf.exe` → `Lively.PlayerWmf.exe`, `Lively.Utility.Watchdog.exe` → `Lively.Watchdog.exe`) to match the paths the core expects | Upstream release layout, not reproducible from the repo before Phase 1B | T3, T7 |
 | App-local MSVC runtime for CEF, Magick and WinAppSDK | Replaces the VC++ redistributable the installer would install | T1, T4 (CEF) |
 | Self-contained core and UI | The installer layout is framework-dependent | T1–T4; T14 |
-| mpv baseline x86-64 build `20260921-git-e76a35ec95` | Third-party binary, pinned by SHA-256 | T3, T5 |
+| mpv baseline x86-64 build `20261111-git-bcde6b93cc` | Third-party binary, pinned by release tag and SHA-256, and checked against GitHub's asset digest | T3, T5 |
+| Transitive security pins (`System.Private.Uri` 4.3.2, `System.Text.RegularExpressions` 4.3.1, `System.Text.Json` 8.0.5) | New assemblies in the core, UI and .NET Framework players' graphs | T1–T4 (each player starts) |
 | Magick.NET 14.17.2 (security update) | Native ImageMagick changed; used for thumbnails, GIF capture and the taskbar accent | T3–T5 (thumbnails), T4 import |
 | Watchdog installation filter | New code (Phase 1) | T7, T11 |
 | `VibeLoop.scr` side-by-side lookup | New code (Phase 1B) | T8, T9 |
