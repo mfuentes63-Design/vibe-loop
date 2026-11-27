@@ -1,0 +1,29 @@
+{
+  "_comment": "Pinned third-party runtimes downloaded by New-VibeLoopTestPackage.ps1. Every entry is verified by SHA-256 before use; a mismatch fails the build. NuGet-delivered runtimes (CEF via CefSharp, libVLC via VideoLAN.LibVLC.Windows, WebView2 loader, Windows App SDK, .NET) are pinned by the project files instead.",
+  "runtimes": [
+    {
+      "name": "mpv",
+      "purpose": "Default video, GIF and picture wallpaper player (Constants.AppDefaults) - required.",
+      "version": "20260921-git-e76a35ec95",
+      "url": "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260921/mpv-x86_64-20260921-git-e76a35ec95.7z",
+      "sha256": "edff63899c74c0c11fd49233df8a2979a07f9814f5752a2f4012f405562d49d1",
+      "archive": "7z",
+      "destination": "plugins/mpv",
+      "requiredFiles": [
+        "mpv.exe"
+      ],
+      "variantNote": "Baseline x86-64 build (not the x86-64-v3/AVX2 build) so it runs on VMs without AVX2.",
+      "license": "mpv: GPL-2.0-or-later (LGPL-2.1-or-later when built without GPL parts). This build links FFmpeg and other libraries under GPL/LGPL terms; treat the binary as GPL-3.0-compatible GPL software.",
+      "source": [
+        "https://github.com/mpv-player/mpv/tree/e76a35ec95",
+        "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20260921"
+      ],
+      "removeAfterExtract": [
+        "installer",
+        "updater.bat",
+        "updater.ps1"
+      ],
+      "removeNote": "mpv's optional file-association installer and self-updater scripts are removed: the test package must not contain installers or updaters."
+    }
+  ]
+}
