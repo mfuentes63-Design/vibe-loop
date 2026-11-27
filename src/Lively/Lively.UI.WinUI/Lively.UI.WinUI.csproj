@@ -5,8 +5,14 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <RootNamespace>Lively.UI.WinUI</RootNamespace>
-    <!-- Vibe Loop: file-name/AssemblyName intentionally kept as Lively.UI.WinUI (core launcher, watchdog and
-         WinAppSDK resource lookup depend on it); only the metadata shown in Task Manager / file properties changes. -->
+    <!-- Vibe Loop: the UI executable is VibeLoop.UI.exe (process name "VibeLoop.UI"). Upstream Lively's watchdog kills every
+         process named "Lively.UI.WinUI" when its core exits, so sharing that name let Lively close Vibe Loop's UI.
+         Only the output name changes: RootNamespace (XAML x:Class / using: namespaces, generated type info) and the
+         project file stay "Lively.UI.WinUI". Launch references: Lively/Services/RunnerService.cs, Lively.Utility.Watchdog. -->
+    <AssemblyName>VibeLoop.UI</AssemblyName>
+    <!-- Keep the PRI identity unchanged by the rename (file resources.pri, index/resource-map name as before) so
+         x:Uid / ResourceLoader lookups resolve exactly as they did; CI dumps the PRI to verify (build/package). -->
+    <ProjectPriIndexName>Lively.UI.WinUI</ProjectPriIndexName>
     <Product>Vibe Loop</Product>
     <AssemblyTitle>Vibe Loop</AssemblyTitle>
     <Description>Vibe Loop user interface. Based on Lively Wallpaper (GPL-3.0).</Description>
