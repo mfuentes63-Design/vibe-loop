@@ -1,11 +1,12 @@
 ﻿; Inno Setup
 ; https://jrsoftware.org/isinfo.php
 
-#define MyAppName "Lively Wallpaper"
+; Vibe Loop is a fork of Lively Wallpaper (https://github.com/rocksdanister/lively), GPL-3.0.
+#define MyAppName "Vibe Loop"
 #define MyAppVersion "2.0.7.2"
-#define MyAppPublisher "rocksdanister"
-#define MyAppURL "https://github.com/rocksdanister/lively"
-#define MyAppExeName "Lively.exe"
+#define MyAppPublisher "Vibe Loop (fork of Lively Wallpaper by rocksdanister)"
+#define MyAppURL "https://github.com/mfuentes63-Design/vibe-loop"
+#define MyAppExeName "VibeLoop.exe"
 
 [CustomMessages]
 english.DeleteEverythigMsgBox=Do you want to delete data folder?
@@ -17,7 +18,11 @@ korean.DeleteEverythigMsgBox=데이터 폴더를 삭제하시겠습니까?
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{E3E43E1B-DEC8-44BF-84A6-243DBA3F2CB1}}
+; Vibe Loop: new AppId. Never reuse Lively's {E3E43E1B-DEC8-44BF-84A6-243DBA3F2CB1}: the [Code] section uninstalls any
+; existing install with the same AppId. Keep in sync with Lively.Utility.Screensaver/Program.cs (installerGuid).
+; Format intentionally mirrors upstream ("{{GUID}}" -> AppId value "{GUID}}", uninstall key "{GUID}}_is1"); the screensaver
+; launcher builds the same key, so change both together.
+AppId={{93A384C2-FB92-4015-BFC7-AEDE5495C2C0}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -32,14 +37,14 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ; Ask user which PrivilegesRequired on startup.
 PrivilegesRequiredOverridesAllowed=dialog
-OutputBaseFilename=lively_installer
+OutputBaseFilename=vibeloop_setup_x86_full
 SetupIconFile=Icons\appicon_96.ico
 Compression=lzma
 ;Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 ;Installer/Uninstaller will stop if application is running by checking mutex.
-AppMutex=LIVELY:DESKTOPWALLPAPERSYSTEM
+AppMutex=VIBELOOP:DESKTOPWALLPAPERSYSTEM
 ;https://jrsoftware.org/ishelp/index.php?topic=winvernotes
 ;Win10 1903 or above
 MinVersion=10.0.18362
@@ -89,7 +94,7 @@ Name: "windowsstartup";Description: "{cm:AutoStartProgram,{#MyAppName}}"
 
 [Registry]
 ;current user only
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Lively"; ValueData: """{app}\Lively.exe"""; Flags: uninsdeletevalue; Tasks:windowsstartup
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "VibeLoop"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks:windowsstartup
 
 ;[UninstallDelete]
 
@@ -98,7 +103,7 @@ Source: "VC\VC_redist.x86.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/deploy-unpackaged-apps
 ;Source: "WindowsAppRuntime\WindowsAppRuntimeInstall_x86.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "Release\Lively.exe"; DestDir: "{app}"; Flags: ignoreversion;
+Source: "Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs;
 Source: "dotnetcore\windowsdesktop-runtime-8.0.2-win-x86.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "dotnetcore\netcorecheck.exe"; DestDir: {tmp}; Flags: deleteafterinstall
@@ -161,13 +166,13 @@ begin
   if CurUninstallStep = usPostUninstall then
   begin
     // query user to confirm deletion; if user chose "Yes", then...
-    if SuppressibleMsgBox(ExpandConstant('{cm:DeleteEverythigMsgBox}')+ ' ' + ExpandConstant('{localappdata}\Lively Wallpaper') + ' ?',
+    if SuppressibleMsgBox(ExpandConstant('{cm:DeleteEverythigMsgBox}')+ ' ' + ExpandConstant('{localappdata}\Vibe Loop') + ' ?',
       mbConfirmation, MB_YESNO, IDNO) = IDYES
     then
       // deletion confirmed by user.
       begin
-        // Delete the directory "C:\Users\<UserName>\AppData\Local\Lively Wallpaper" and everything inside it
-        DelTree(ExpandConstant('{localappdata}\Lively Wallpaper'), True, True, True);
+        // Delete the directory "C:\Users\<UserName>\AppData\Local\Vibe Loop" and everything inside it
+        DelTree(ExpandConstant('{localappdata}\Vibe Loop'), True, True, True);
       end;
   end;
 end;
