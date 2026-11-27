@@ -3,6 +3,15 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows10.0.18362.0</TargetFramework>
+    <!-- Vibe Loop: executable is VibeLoop.exe. RootNamespace is pinned to the project name so that embedded
+         resource manifest names (Lively.Properties.Resources, Lively.Properties.Icons) and C# namespaces stay unchanged. -->
+    <AssemblyName>VibeLoop</AssemblyName>
+    <RootNamespace>Lively</RootNamespace>
+    <Product>Vibe Loop</Product>
+    <AssemblyTitle>Vibe Loop</AssemblyTitle>
+    <Description>Vibe Loop - Make your screen come alive. Based on Lively Wallpaper (GPL-3.0).</Description>
+    <Company>Vibe Loop</Company>
+    <Copyright>Vibe Loop contributors; based on Lively Wallpaper, Copyright (c) rocksdanister and contributors. GPL-3.0.</Copyright>
     <UseWPF>true</UseWPF>
     <StartupObject></StartupObject>
     <ApplicationIcon>appicon.ico</ApplicationIcon>

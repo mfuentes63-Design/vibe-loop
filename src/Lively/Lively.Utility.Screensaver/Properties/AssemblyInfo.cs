@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Lively.Screensaver.Minimal")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Vibe Loop Screensaver")]
+[assembly: AssemblyDescription("Vibe Loop screensaver launcher. Based on Lively Wallpaper (GPL-3.0).")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Lively.Screensaver.Minimal")]
+[assembly: AssemblyProduct("Vibe Loop")]
 [assembly: AssemblyCopyright("Copyright ©  2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
