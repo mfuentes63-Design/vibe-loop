@@ -10,6 +10,9 @@
   <ItemGroup>
     <PackageReference Include="CSharp.OperationResult" Version="0.1.6" />
     <PackageReference Include="Watson" Version="5.1.3" />
+    <!-- Vibe Loop security pin: a dependency of this project resolves System.Text.Json 7.0.2 (GHSA-hh2w-p6rv-4g7w, high).
+         Pin a patched 8.0.x servicing release (fixes flow to Lively.UI.WinUI through this project). -->
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>
